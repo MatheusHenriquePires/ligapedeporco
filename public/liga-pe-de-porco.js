@@ -18,11 +18,8 @@ var saveTimer = null;
 var ADMIN_TOKEN_STORAGE_KEY = 'liga-pe-admin-token';
 var adminAccessChecked = false;
 var adminAccessGranted = false;
-var pendingRemoteSave = false;
 
 function load(){
-  var d=localStorage.getItem('ppliga');
-  if(d){try{S=JSON.parse(d);}catch(e){}}
   normalizeLeague();
   initAdminAccess();
   connectSupabase();
@@ -30,8 +27,6 @@ function load(){
 
 function save(){
   normalizeLeague();
-  localStorage.setItem('ppliga',JSON.stringify(S));
-  pendingRemoteSave = true;
   queueRemoteSave();
 }
 
@@ -45,10 +40,11 @@ function getSupabaseConfig(){
 
 async function connectSupabase(){
   var cfg = getSupabaseConfig();
-  if(!cfg.url || !cfg.key || !window.supabase || !window.supabase.createClient) return;
+  if(!cfg.url || !cfg.key || !window.supabase || !window.supabase.createClient){
+    showToast('⚠ Supabase não configurado.');
+    return;
+  }
   try{
-    var localState = JSON.parse(JSON.stringify(S));
-    var localHasData = hasLeagueData(localState);
     supabaseClient = window.supabase.createClient(cfg.url, cfg.key);
     var res = await supabaseClient
       .from(SUPABASE_TABLE)
@@ -58,27 +54,15 @@ async function connectSupabase(){
 
     if(res.error) throw res.error;
     if(res.data && res.data.data){
-      var remoteState = res.data.data;
-      if(hasLeagueData(remoteState) || !localHasData){
-        S = remoteState;
-        normalizeLeague();
-        localStorage.setItem('ppliga',JSON.stringify(S));
-        renderHome();
-        renderAdmin();
-        renderPage(getActivePageName());
-      } else {
-        S = localState;
-        normalizeLeague();
-        pendingRemoteSave = true;
-        queueRemoteSave();
-      }
-    } else {
-      pendingRemoteSave = localHasData;
-      queueRemoteSave();
+      S = res.data.data;
+      normalizeLeague();
     }
+    renderHome();
+    renderAdmin();
+    renderPage(getActivePageName());
   } catch(err){
     console.error('Supabase sync failed:', err);
-    showToast('⚠ Supabase indisponível. Usando dados locais.');
+    showToast('⚠ Não foi possível carregar dados do Supabase.');
   }
 }
 
@@ -100,7 +84,6 @@ async function saveRemoteState(){
       body: JSON.stringify({ data: S })
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
-    pendingRemoteSave = false;
   } catch(err){
     console.error('Supabase save failed:', err);
     showToast('⚠ Não foi possível salvar no Supabase.');
@@ -121,15 +104,6 @@ function normalizeLeague(){
     m.group = LEAGUE_GROUP;
     return m;
   });
-}
-
-function hasLeagueData(state){
-  state = state || {};
-  return !!(
-    (state.teams && state.teams.length) ||
-    (state.players && state.players.length) ||
-    (state.matches && state.matches.length)
-  );
 }
 
 // ══════════════════════════════════════════════
@@ -194,7 +168,6 @@ async function initAdminAccess(){
     console.error('Admin gate failed:', err);
   }
   updateAdminVisibility();
-  if(adminAccessGranted && pendingRemoteSave) queueRemoteSave();
   renderPage(getActivePageName());
 }
 
