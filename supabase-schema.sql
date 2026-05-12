@@ -14,16 +14,5 @@ to anon
 using (true);
 
 drop policy if exists "league_state_public_write" on public.league_state;
-create policy "league_state_public_write"
-on public.league_state
-for insert
-to anon
-with check (true);
 
 drop policy if exists "league_state_public_update" on public.league_state;
-create policy "league_state_public_update"
-on public.league_state
-for update
-to anon
-using (true)
-with check (true);

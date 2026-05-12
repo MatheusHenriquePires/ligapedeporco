@@ -15,11 +15,16 @@ var SUPABASE_TABLE = 'league_state';
 var SUPABASE_ROW_ID = 'main';
 var supabaseClient = null;
 var saveTimer = null;
+var ADMIN_TOKEN_STORAGE_KEY = 'liga-pe-admin-token';
+var adminAccessChecked = false;
+var adminAccessGranted = false;
+var adminAccessIp = '';
 
 function load(){
   var d=localStorage.getItem('ppliga');
   if(d){try{S=JSON.parse(d);}catch(e){}}
   normalizeLeague();
+  initAdminAccess();
   connectSupabase();
 }
 
@@ -66,22 +71,23 @@ async function connectSupabase(){
 }
 
 function queueRemoteSave(){
-  if(!supabaseClient) return;
+  if(!adminAccessGranted) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveRemoteState, 350);
 }
 
 async function saveRemoteState(){
-  if(!supabaseClient) return;
+  if(!adminAccessGranted) return;
   try{
-    var res = await supabaseClient
-      .from(SUPABASE_TABLE)
-      .upsert({
-        id: SUPABASE_ROW_ID,
-        data: S,
-        updated_at: new Date().toISOString()
-      });
-    if(res.error) throw res.error;
+    var res = await fetch('/.netlify/functions/save-state', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Token': getAdminToken()
+      },
+      body: JSON.stringify({ data: S })
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
   } catch(err){
     console.error('Supabase save failed:', err);
     showToast('⚠ Não foi possível salvar no Supabase.');
@@ -105,9 +111,85 @@ function normalizeLeague(){
 }
 
 // ══════════════════════════════════════════════
+//  ADMIN ACCESS
+// ══════════════════════════════════════════════
+function getAdminTokenFromUrl(){
+  var params = new URLSearchParams(window.location.search);
+  var token = params.get('admin') || params.get('admin_token');
+  if(!token) return '';
+  params.delete('admin');
+  params.delete('admin_token');
+  var cleanUrl = window.location.pathname + (params.toString() ? '?'+params.toString() : '') + window.location.hash;
+  window.history.replaceState({}, document.title, cleanUrl);
+  return token;
+}
+
+function getAdminToken(){
+  return sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || '';
+}
+
+function updateAdminVisibility(){
+  document.body.classList.toggle('admin-unlocked', adminAccessGranted);
+}
+
+function isLocalDev(){
+  return ['localhost','127.0.0.1',''].indexOf(window.location.hostname) >= 0;
+}
+
+async function initAdminAccess(){
+  var tokenFromUrl = getAdminTokenFromUrl();
+  if(tokenFromUrl) sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, tokenFromUrl);
+
+  if(isLocalDev() && !getAdminToken()){
+    adminAccessChecked = true;
+    adminAccessGranted = true;
+    updateAdminVisibility();
+    return;
+  }
+
+  var token = getAdminToken();
+  if(!token){
+    adminAccessChecked = true;
+    adminAccessGranted = false;
+    updateAdminVisibility();
+    return;
+  }
+
+  try{
+    var res = await fetch('/.netlify/functions/admin-gate', {
+      headers: { 'X-Admin-Token': token }
+    });
+    var data = await res.json().catch(function(){ return {}; });
+    adminAccessChecked = true;
+    adminAccessGranted = !!(res.ok && data.ok);
+    adminAccessIp = data.ip || '';
+    if(!adminAccessGranted){
+      sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+      if(data.error) showToast('⚠ Acesso admin bloqueado: '+data.error);
+    }
+  } catch(err){
+    adminAccessChecked = true;
+    adminAccessGranted = false;
+    console.error('Admin gate failed:', err);
+  }
+  updateAdminVisibility();
+  renderPage(getActivePageName());
+}
+
+function requireAdminAccess(){
+  if(adminAccessGranted) return true;
+  showToast(adminAccessChecked ? '⚠ Acesso restrito a admins autorizados.' : '⚠ Validando acesso admin...');
+  return false;
+}
+
+// ══════════════════════════════════════════════
 //  NAV
 // ══════════════════════════════════════════════
 function showPage(name, btn){
+  if(name==='gerenciar' && !requireAdminAccess()){
+    name = 'home';
+    btn = document.querySelector('.nav-link');
+  }
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   document.querySelectorAll('.nav-link').forEach(function(l){l.classList.remove('active')});
   var p = document.getElementById('page-'+name);
@@ -377,17 +459,22 @@ function renderMatches(){
 
       var div = document.createElement('div');
       div.className='match-item';
+      var centerHtml = '';
+      if(m.played){
+        centerHtml = '<div class="match-status">Encerrado</div>'
+          +'<div class="match-score-display"><span class="score-num '+(hWinner?'sg-pos':m.played&&!hWinner&&!aWinner?'':'')+'"  >'+m.homeGoals+'</span><span class="score-sep">×</span><span class="score-num">'+m.awayGoals+'</span></div>'
+          +(adminAccessGranted ? '<button class="btn-edit" onclick="editMatchResult('+idx+')">✎ Editar</button>' : '');
+      } else if(adminAccessGranted){
+        centerHtml = '<div class="match-status">Aguardando</div>'
+          +'<div class="score-inputs"><input class="score-inp" id="hi'+idx+'" type="number" min="0" max="99" placeholder="0"><span class="score-sep">×</span><input class="score-inp" id="ai'+idx+'" type="number" min="0" max="99" placeholder="0"></div>'
+          +'<button class="btn-save" onclick="saveMatchResult('+idx+')">✔ Salvar</button>';
+      } else {
+        centerHtml = '<div class="match-status">Aguardando</div><div class="match-score-display"><span class="score-num">-</span><span class="score-sep">×</span><span class="score-num">-</span></div>';
+      }
       div.innerHTML=
         '<div class="match-team-side home'+(hWinner?' winner-side':m.played?' loser-side':'')+'">'+teamBadgeHTML(m.home,'match-team-badge')+'<span class="match-team-name" style="font-family:\'Barlow Condensed\',sans-serif;font-size:16px;font-weight:700">'+escapeHTML(m.home)+'</span></div>'
         +'<div class="match-center">'
-        +(m.played
-          ? '<div class="match-status">Encerrado</div>'
-            +'<div class="match-score-display"><span class="score-num '+(hWinner?'sg-pos':m.played&&!hWinner&&!aWinner?'':'')+'"  >'+m.homeGoals+'</span><span class="score-sep">×</span><span class="score-num">'+m.awayGoals+'</span></div>'
-            +'<button class="btn-edit" onclick="editMatchResult('+idx+')">✎ Editar</button>'
-          : '<div class="match-status">Aguardando</div>'
-            +'<div class="score-inputs"><input class="score-inp" id="hi'+idx+'" type="number" min="0" max="99" placeholder="0"><span class="score-sep">×</span><input class="score-inp" id="ai'+idx+'" type="number" min="0" max="99" placeholder="0"></div>'
-            +'<button class="btn-save" onclick="saveMatchResult('+idx+')">✔ Salvar</button>'
-        )
+        +centerHtml
         +'</div>'
         +'<div class="match-team-side away'+(aWinner?' winner-side':m.played?' loser-side':'')+'"><span class="match-team-name" style="font-family:\'Barlow Condensed\',sans-serif;font-size:16px;font-weight:700">'+escapeHTML(m.away)+'</span>'+teamBadgeHTML(m.away,'match-team-badge')+'</div>';
       container.appendChild(div);
@@ -395,6 +482,7 @@ function renderMatches(){
 }
 
 function saveMatchResult(idx){
+  if(!requireAdminAccess()) return;
   var h=document.getElementById('hi'+idx), a=document.getElementById('ai'+idx);
   if(!h||!a||h.value===''||a.value===''){showToast('⚠ Insira os dois placares!');return;}
   var homeGoals=parseInt(h.value);
@@ -408,6 +496,7 @@ function saveMatchResult(idx){
 }
 
 function editMatchResult(idx){
+  if(!requireAdminAccess()) return;
   S.matches[idx].played=false;
   save(); renderMatches();
 }
@@ -443,12 +532,13 @@ function renderPlayers(stat){
       +'<td style="font-family:\'Barlow Condensed\',sans-serif;font-size:16px;font-weight:700;color:'+(stat==='assists'?'var(--gold)':'#fff')+'">'+((p.assists||0))+'</td>'
       +'<td>'+((p.yellowCards||0)?'<span style="background:#eab30830;color:#eab308;padding:2px 6px;font-size:11px;font-weight:800">'+p.yellowCards+'</span>':'<span style="color:var(--muted)">0</span>')+'</td>'
       +'<td>'+((p.redCards||0)?'<span style="background:#ef444430;color:#ef4444;padding:2px 6px;font-size:11px;font-weight:800">'+p.redCards+'</span>':'<span style="color:var(--muted)">0</span>')+'</td>'
-      +'<td><button class="btn-edit" onclick="openPlayerModal(\''+p.id+'\')">Editar</button></td>'
+      +'<td>'+(adminAccessGranted ? '<button class="btn-edit" onclick="openPlayerModal(\''+p.id+'\')">Editar</button>' : '<span style="color:var(--muted)">—</span>')+'</td>'
       +'</tr>';
   });
 }
 
 function openPlayerModal(id){
+  if(!requireAdminAccess()) return;
   var p=S.players.find(function(x){return x.id===id});
   if(!p) return;
   document.getElementById('editPlayerId').value=id;
@@ -460,6 +550,7 @@ function openPlayerModal(id){
 }
 
 function savePlayerStats(){
+  if(!requireAdminAccess()) return;
   var id=document.getElementById('editPlayerId').value;
   var p=S.players.find(function(x){return x.id===id});
   if(!p) return;
@@ -482,6 +573,9 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 //  ADMIN
 // ══════════════════════════════════════════════
 function renderAdmin(){
+  if(!adminAccessGranted){
+    return;
+  }
   normalizeLeague();
   document.getElementById('cfgSeason').value=S.config.season||'2025';
 
@@ -507,6 +601,7 @@ function renderAdmin(){
 }
 
 function applyConfig(){
+  if(!requireAdminAccess()) return;
   S.config.format='single';
   S.config.season=document.getElementById('cfgSeason').value||'2025';
   save(); showToast('✔ Configuração aplicada!'); renderAdmin();
@@ -556,6 +651,7 @@ function parseTeamPlayers(raw, team){
 }
 
 function addTeam(){
+  if(!requireAdminAccess()) return;
   var name=document.getElementById('newTeamName').value.trim();
   if(!name){showToast('⚠ Digite o nome do time!');return;}
   if(S.teams.length>=MAX_TEAMS){showToast('⚠ A liga permite exatamente 5 times.');return;}
@@ -575,6 +671,7 @@ function addTeam(){
 }
 
 function removeTeam(i){
+  if(!requireAdminAccess()) return;
   var name=S.teams[i].name;
   S.teams.splice(i,1);
   S.players=S.players.filter(function(p){return p.team!==name});
@@ -583,6 +680,7 @@ function removeTeam(i){
 }
 
 function addPlayer(){
+  if(!requireAdminAccess()) return;
   var name=document.getElementById('newPlayerName').value.trim();
   var team=document.getElementById('newPlayerTeam').value;
   var pos=document.getElementById('newPlayerPos').value;
@@ -598,6 +696,7 @@ function addPlayer(){
 }
 
 function generateMatches(){
+  if(!requireAdminAccess()) return;
   if(!S.teams.length){showToast('⚠ Cadastre os times primeiro!');return;}
   if(S.teams.length!==MAX_TEAMS){showToast('⚠ Cadastre exatamente 5 times para gerar a liga.');return;}
   if(S.matches.length&&!confirm('Gerar novos confrontos apaga os resultados atuais. Continuar?')) return;
@@ -626,6 +725,7 @@ function generateMatches(){
 }
 
 function resetLeague(){
+  if(!requireAdminAccess()) return;
   if(!confirm('Tem certeza? Isso apaga TUDO.')) return;
   S={teams:[],players:[],matches:[],config:{format:'single',season:'2025'}};
   save(); renderAdmin(); showToast('Liga resetada.');

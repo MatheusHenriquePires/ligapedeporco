@@ -4,6 +4,6 @@
   "private": true,
   "scripts": {
     "build": "node scripts/generate-env.mjs && node scripts/build-static.mjs",
-    "lint": "node --check public/liga-pe-de-porco.js && node --check scripts/generate-env.mjs && node --check scripts/build-static.mjs"
+    "lint": "node --check public/liga-pe-de-porco.js && node --check scripts/generate-env.mjs && node --check scripts/build-static.mjs && node --check netlify/functions/admin-utils.js && node --check netlify/functions/admin-gate.js && node --check netlify/functions/save-state.js"
   }
 }
