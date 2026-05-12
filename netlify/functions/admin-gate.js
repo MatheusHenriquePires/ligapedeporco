@@ -7,8 +7,8 @@ exports.handler = async (event) => {
 
   const auth = validateAdmin(event);
   if (!auth.ok) {
-    return json(auth.statusCode, { ok: false, error: auth.reason, ip: auth.ip || "" });
+    return json(auth.statusCode, { ok: false, error: auth.reason });
   }
 
-  return json(200, { ok: true, ip: auth.ip });
+  return json(200, { ok: true });
 };

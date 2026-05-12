@@ -18,7 +18,6 @@ var saveTimer = null;
 var ADMIN_TOKEN_STORAGE_KEY = 'liga-pe-admin-token';
 var adminAccessChecked = false;
 var adminAccessGranted = false;
-var adminAccessIp = '';
 
 function load(){
   var d=localStorage.getItem('ppliga');
@@ -162,7 +161,6 @@ async function initAdminAccess(){
     var data = await res.json().catch(function(){ return {}; });
     adminAccessChecked = true;
     adminAccessGranted = !!(res.ok && data.ok);
-    adminAccessIp = data.ip || '';
     if(!adminAccessGranted){
       sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
       if(data.error) showToast('⚠ Acesso admin bloqueado: '+data.error);
