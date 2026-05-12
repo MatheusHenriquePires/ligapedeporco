@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pé de Porco — Liga Oficial</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="liga-pe-de-porco.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#" onclick="showPage('home');return false">
+    <img src="imgs/White Modern Technology Logo (41).png" alt="Liga Pé de Porco">
+    PÉ DE PORCO
+  </a>
+  <div class="nav-links">
+    <div class="nav-link active" onclick="showPage('home',this)">Início</div>
+    <div class="nav-link" onclick="showPage('classificacao',this)">Classificação</div>
+    <div class="nav-link" onclick="showPage('jogos',this)">Jogos</div>
+    <div class="nav-link" onclick="showPage('jogadores',this)">Jogadores</div>
+    <div class="nav-link" onclick="showPage('gerenciar',this)">⚙ Gerenciar</div>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-badge" onclick="showPage('gerenciar',document.querySelector('.nav-link:last-child'))">Admin</div>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-label">AO VIVO</div>
+  <div style="overflow:hidden;flex:1">
+    <div class="ticker-track" id="tickerTrack">
+      <span class="ticker-item"><span>Carregando resultados...</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<div class="page active" id="page-home">
+<main>
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Fase de Liga • Pontos Corridos</div>
+      <div class="hero-title">Liga<br><span>Pé de</span><br>Porco</div>
+      <div class="hero-sub" id="heroSub">Configure a liga na aba Gerenciar para começar</div>
+      <div class="hero-stats">
+        <div><div class="hero-stat-val" id="heroTeams">—</div><div class="hero-stat-lbl">Times</div></div>
+        <div><div class="hero-stat-val" id="heroGames">—</div><div class="hero-stat-lbl">Jogos</div></div>
+        <div><div class="hero-stat-val" id="heroGoals">—</div><div class="hero-stat-lbl">Gols</div></div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="showPage('jogos',document.querySelectorAll('.nav-link')[2])">Ver Jogos</button>
+        <button class="btn-secondary" onclick="showPage('classificacao',document.querySelectorAll('.nav-link')[1])">Classificação</button>
+      </div>
+    </div>
+    <div class="hero-mark">
+      <img src="imgs/White Modern Technology Logo (41).png" alt="Liga Pé de Porco">
+    </div>
+  </div>
+
+  <div id="mvpSection" style="display:none">
+    <div class="sec-head"><div class="sec-title">MVP da Rodada</div></div>
+    <div class="mvp-section">
+      <div class="mvp-avatar" id="mvpAvatar">?</div>
+      <div style="position:relative;z-index:1">
+        <div class="mvp-badge">MVP</div>
+        <div class="mvp-name" id="mvpName">—</div>
+        <div class="mvp-team" id="mvpTeam">—</div>
+        <div class="mvp-stats">
+          <div class="mvp-stat"><div class="mvp-stat-val" id="mvpGoals">0</div><div class="mvp-stat-lbl">Gols</div></div>
+          <div class="mvp-stat"><div class="mvp-stat-val" id="mvpAssists">0</div><div class="mvp-stat-lbl">Assist.</div></div>
+          <div class="mvp-stat"><div class="mvp-stat-val" id="mvpRating">—</div><div class="mvp-stat-lbl">Nota</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-grid">
+    <div>
+      <div class="sec-head">
+        <div class="sec-title">Classificação</div>
+        <div class="sec-link" onclick="showPage('classificacao',document.querySelectorAll('.nav-link')[1])">Ver mais →</div>
+      </div>
+      <table class="classif-table">
+        <thead>
+          <tr>
+            <th>#</th><th style="text-align:left">Time</th><th>J</th><th>Pts</th><th>SG</th><th>Forma</th>
+          </tr>
+        </thead>
+        <tbody id="homeStandingsTbody"></tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:12px;font-size:10px;color:var(--muted)">
+        <span><span style="color:var(--gold)">■</span> Líder</span>
+        <span><span style="color:#aaa">■</span> Pódio</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-head">
+        <div class="sec-title">Estatísticas</div>
+        <div class="sec-link" onclick="showPage('jogadores',document.querySelectorAll('.nav-link')[3])">Ver mais →</div>
+      </div>
+      <div class="stats-grid" id="homeStatsGrid">
+        <div class="stat-card">
+          <div class="stat-card-bg"></div>
+          <div class="stat-card-label">Artilheiro</div>
+          <div class="stat-card-inner">
+            <div class="stat-card-type">🥅 Máx. Artilheiro</div>
+            <div class="stat-card-player" id="sc1name">—</div>
+            <div class="stat-card-team" id="sc1team">—</div>
+            <div class="stat-card-val" id="sc1val">0</div>
+            <div class="stat-card-others" id="sc1others"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-bg"></div>
+          <div class="stat-card-label">Assist.</div>
+          <div class="stat-card-inner">
+            <div class="stat-card-type">🎯 Máx. Assistente</div>
+            <div class="stat-card-player" id="sc2name">—</div>
+            <div class="stat-card-team" id="sc2team">—</div>
+            <div class="stat-card-val" id="sc2val">0</div>
+            <div class="stat-card-others" id="sc2others"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-bg"></div>
+          <div class="stat-card-label">Cartões</div>
+          <div class="stat-card-inner">
+            <div class="stat-card-type">🟨 Mais Cartões</div>
+            <div class="stat-card-player" id="sc3name">—</div>
+            <div class="stat-card-team" id="sc3team">—</div>
+            <div class="stat-card-val" id="sc3val">0</div>
+            <div class="stat-card-others" id="sc3others"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="home-sponsors">
+    <div class="sec-head"><div class="sec-title">Patrocinadores</div></div>
+    <div class="sponsors-stage">
+      <div class="sponsors-grid">
+        <div class="sponsor-card">
+          <img src="imgs/mb.png" alt="MB Moda Íntima">
+        </div>
+        <div class="sponsor-card">
+          <img src="imgs/ch.png" alt="CH">
+        </div>
+        <div class="sponsor-card">
+          <img src="imgs/ge.png" alt="GEOH Fisioterapia">
+        </div>
+        <div class="sponsor-card">
+          <img src="imgs/White Modern Technology Logo (43).png" alt="Arena Lima">
+        </div>
+        <div class="sponsor-card">
+          <img src="imgs/jm.png" alt="JM Centro de Treinamento">
+
+        </div>
+        <div class="sponsor-card">
+          <img src="imgs/ff.png" alt="Arena ff">
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<!-- ═══════════════ CLASSIFICAÇÃO ═══════════════ -->
+<div class="page" id="page-classificacao">
+<main>
+  <div style="padding-top:24px">
+    <div class="sec-head"><div class="sec-title">Classificação Completa</div></div>
+    <div id="fullStandingsContainer"></div>
+  </div>
+</main>
+</div>
+
+<!-- ═══════════════ JOGOS ═══════════════ -->
+<div class="page" id="page-jogos">
+<main style="padding-top:24px">
+  <div class="sec-head"><div class="sec-title">Jogos — Fase de Liga</div></div>
+  <div class="rounds-nav" id="roundsNav"></div>
+  <div class="matches-list" id="matchesContainer"></div>
+</main>
+</div>
+
+<!-- ═══════════════ JOGADORES ═══════════════ -->
+<div class="page" id="page-jogadores">
+<main style="padding-top:24px">
+  <div class="sec-head"><div class="sec-title">Jogadores &amp; Estatísticas</div></div>
+  <div class="players-filters">
+    <button class="filter-btn active" onclick="sortPlayers('goals',this)">⚽ Gols</button>
+    <button class="filter-btn" onclick="sortPlayers('assists',this)">🎯 Assistências</button>
+    <button class="filter-btn" onclick="sortPlayers('yellowCards',this)">🟨 Cartões Amarelos</button>
+    <button class="filter-btn" onclick="sortPlayers('redCards',this)">🟥 Cartões Vermelhos</button>
+  </div>
+  <table class="players-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th onclick="sortPlayers('name',this)">Jogador</th>
+        <th>Time</th>
+        <th onclick="sortPlayers('goals',this)" class="sorted">⚽</th>
+        <th onclick="sortPlayers('assists',this)">🎯</th>
+        <th onclick="sortPlayers('yellowCards',this)">🟨</th>
+        <th onclick="sortPlayers('redCards',this)">🟥</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="playersTableBody"></tbody>
+  </table>
+</main>
+</div>
+
+<!-- ═══════════════ GERENCIAR ═══════════════ -->
+<div class="page" id="page-gerenciar">
+<main style="padding-top:24px">
+  <div class="sec-head"><div class="sec-title">⚙ Painel Administrativo</div></div>
+  <div class="admin-grid">
+
+    <!-- Config da Liga -->
+    <div class="admin-panel">
+      <div class="admin-title">Configurar Liga</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Formato fixo: <strong style="color:var(--gold)">fase de liga em pontos corridos</strong>, com 1 grupo de 5 times. Todos se enfrentam uma vez, totalizando 10 jogos em 5 rodadas.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Temporada / Edição</label>
+        <input class="form-input" id="cfgSeason" value="2025" placeholder="Ex: 2025">
+      </div>
+      <button class="btn-primary" onclick="applyConfig()" style="margin-top:4px">Aplicar Configuração</button>
+    </div>
+
+    <!-- Adicionar Time -->
+    <div class="admin-panel">
+      <div class="admin-title">Adicionar Time</div>
+      <div class="form-group">
+        <label class="form-label">Nome do Time</label>
+        <input class="form-input" id="newTeamName" placeholder="Ex: Garotos FC">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Logo do Time</label>
+        <input class="form-input file-input" id="newTeamLogo" type="file" accept="image/*">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jogadores do Time</label>
+        <textarea class="form-input form-textarea" id="newTeamPlayers" placeholder="Um por linha. Ex: João Silva - ATA"></textarea>
+      </div>
+      <button class="btn-primary" onclick="addTeam()" style="margin-bottom:16px">Adicionar Time</button>
+      <div class="admin-title" style="margin-top:8px">Times Cadastrados</div>
+      <div class="team-list-admin" id="teamListAdmin"></div>
+    </div>
+
+    <!-- Adicionar Jogador -->
+    <div class="admin-panel">
+      <div class="admin-title">Adicionar Jogador</div>
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="newPlayerName" placeholder="Nome do jogador">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time</label>
+        <select class="form-select" id="newPlayerTeam"><option value="">Selecione...</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Posição</label>
+      <select class="form-select" id="newPlayerPos">
+        <option value="GOL">Goleiro</option>
+        <option value="FIX">Fixo</option>
+        <option value="ALA">Ala</option>
+        <option value="PIV">Pivô</option>
+      </select>
+      </div>
+      <button class="btn-primary" onclick="addPlayer()">Adicionar Jogador</button>
+    </div>
+
+    <!-- Gerar Jogos -->
+    <div class="admin-panel">
+      <div class="admin-title">Gerar Jogos</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Gera automaticamente os confrontos da fase de liga. É preciso cadastrar exatamente 5 times. <strong style="color:var(--gold)">Atenção: isso vai apagar os resultados atuais.</strong>
+      </p>
+      <button class="btn-primary" onclick="generateMatches()">⚔ Gerar Confrontos</button>
+
+      <div class="admin-title" style="margin-top:24px">Resetar Liga</div>
+      <button class="btn-danger" onclick="resetLeague()" style="margin-top:4px;padding:8px 16px;font-size:13px">⚠ Resetar Tudo</button>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- MODAL: Editar Jogador -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('playerModal')">✕</button>
+    <div class="modal-title">Editar Jogador</div>
+    <input type="hidden" id="editPlayerId">
+    <div class="form-group">
+      <label class="form-label">Gols</label>
+      <input class="form-input" id="editGoals" type="number" min="0" value="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Assistências</label>
+      <input class="form-input" id="editAssists" type="number" min="0" value="0">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cart. Amarelos</label>
+        <input class="form-input" id="editYellow" type="number" min="0" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cart. Vermelhos</label>
+        <input class="form-input" id="editRed" type="number" min="0" value="0">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="savePlayerStats()" style="margin-top:8px;width:100%">Salvar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/env.js"></script>
+<script src="liga-pe-de-porco.js"></script>
+</body>
+</html>
