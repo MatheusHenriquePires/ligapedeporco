@@ -73,29 +73,6 @@ nav{
 }
 .admin-denied strong{color:var(--gold)}
 
-/* ── TICKER ── */
-.ticker{
-  background:#0a0907;border-bottom:1px solid rgba(212,160,23,.18);
-  height:32px;overflow:hidden;display:flex;align-items:center;
-}
-.ticker-label{
-  background:var(--crimson);color:#fff;
-  font-size:10px;font-weight:900;padding:0 12px;height:100%;
-  display:flex;align-items:center;letter-spacing:1px;flex-shrink:0;
-  font-family:'Barlow Condensed',sans-serif;
-}
-.ticker-track{
-  display:flex;gap:48px;padding:0 24px;
-  animation:ticker 25s linear infinite;white-space:nowrap;
-}
-@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.ticker-item{
-  display:flex;align-items:center;gap:8px;
-  font-size:12px;color:var(--muted);font-weight:600;
-}
-.ticker-score{color:var(--gold2);font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700}
-.ticker-dot{width:3px;height:3px;border-radius:50%;background:var(--muted2)}
-
 /* ── MAIN LAYOUT ── */
 .page{display:none}
 .page.active{display:block}

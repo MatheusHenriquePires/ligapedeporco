@@ -365,21 +365,6 @@ function renderHome(){
     document.getElementById('mvpSection').style.display='none';
   }
 
-  updateTicker();
-}
-
-// ══════════════════════════════════════════════
-//  TICKER
-// ══════════════════════════════════════════════
-function updateTicker(){
-  var played = S.matches.filter(function(m){return m.played});
-  if(!played.length){ document.getElementById('tickerTrack').innerHTML='<span class="ticker-item">Aguardando resultados...</span>'; return; }
-  var items = played.slice(-10).map(function(m){
-    return '<span class="ticker-item"><strong>'+escapeHTML(m.home)+'</strong> <span class="ticker-score">'+m.homeGoals+' × '+m.awayGoals+'</span> <strong>'+escapeHTML(m.away)+'</strong></span>'
-      +'<span class="ticker-dot"></span>';
-  });
-  var str = items.join('') + items.join('');
-  document.getElementById('tickerTrack').innerHTML = str;
 }
 
 // ══════════════════════════════════════════════
@@ -487,7 +472,7 @@ function saveMatchResult(idx){
   S.matches[idx].awayGoals=awayGoals||0;
   S.matches[idx].played=true;
   save(); showToast('✔ Resultado salvo!');
-  renderMatches(); updateTicker();
+  renderMatches();
 }
 
 function editMatchResult(idx){
