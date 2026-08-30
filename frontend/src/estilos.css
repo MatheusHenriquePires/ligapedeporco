@@ -212,3 +212,33 @@ button{font-family:inherit;cursor:pointer}
   .stats{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:600px){.grade.jogos,.grade.times,.grade.elenco{grid-template-columns:1fr}}
+
+@media (max-width:640px){
+  .topo-inner{flex-wrap:wrap;row-gap:10px;padding:12px 0}
+  .marca{font-size:13px;margin-right:auto;gap:8px}
+  .marca .brasao{width:28px;height:28px}
+  .nav-cta{gap:6px}
+  .nav-cta .btn span{display:none}
+  .nav-cta .btn{padding:9px;border-radius:9px}
+  .nav{order:3;width:100%;justify-content:space-between;gap:2px;margin-left:0}
+  .nav a{flex:1;justify-content:center;padding:9px 4px}
+
+  .hero{padding:32px 0 28px;gap:28px}
+  .hero p{max-width:none}
+  .placar{padding:22px 14px 16px;gap:8px}
+  .nums{font-size:34px;gap:6px;justify-content:center}
+  .nums em{font-size:18px}
+  .lado h3{font-size:13px}
+  .live-top{padding:12px 14px}
+
+  .secao{padding:36px 0}
+  .secao-topo a{margin-left:0;width:100%}
+
+  .card-time{aspect-ratio:4/3}
+  .painel-grafico{padding:14px}
+}
+
+@media (max-width:380px){
+  .stats{grid-template-columns:1fr 1fr}
+  .nav-cta .btn.vazado{display:none}
+}
