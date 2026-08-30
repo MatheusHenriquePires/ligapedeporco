@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <path d="M50,5 L88,18 V54 C88,84 70,104 50,114 C30,104 12,84 12,54 V18 Z" fill="#E8B33D" stroke="#1A1206" stroke-width="3"/>
+  <path d="M58,14 L38,50 H50 L44,76 L68,42 H54 Z" fill="#1A1206"/>
+  <text x="50" y="100" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="15" fill="#1A1206">UR</text>
+</svg>

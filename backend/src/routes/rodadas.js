@@ -3,8 +3,8 @@ import { exigirAdmin } from '../auth.js';
 
 async function partidasDaRodada(rodadaId) {
   return query(
-    `SELECT p.*, c.nome AS casa_nome, c.slug AS casa_slug, c.cor AS casa_cor,
-            f.nome AS fora_nome, f.slug AS fora_slug, f.cor AS fora_cor
+    `SELECT p.*, c.nome AS casa_nome, c.slug AS casa_slug, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
+            f.nome AS fora_nome, f.slug AS fora_slug, f.cor AS fora_cor, f.escudo_url AS fora_escudo
      FROM partidas p
      JOIN times c ON c.id = p.time_casa_id
      JOIN times f ON f.id = p.time_fora_id
@@ -17,8 +17,8 @@ export default async function rotasRodadas(app) {
   app.get('/', async () => {
     const rodadas = await query('SELECT * FROM rodadas ORDER BY numero');
     const partidas = await query(
-      `SELECT p.*, c.nome AS casa_nome, c.slug AS casa_slug, c.cor AS casa_cor,
-              f.nome AS fora_nome, f.slug AS fora_slug, f.cor AS fora_cor
+      `SELECT p.*, c.nome AS casa_nome, c.slug AS casa_slug, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
+              f.nome AS fora_nome, f.slug AS fora_slug, f.cor AS fora_cor, f.escudo_url AS fora_escudo
        FROM partidas p
        JOIN times c ON c.id = p.time_casa_id
        JOIN times f ON f.id = p.time_fora_id

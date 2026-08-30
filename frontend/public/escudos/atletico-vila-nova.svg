@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <path id="av-forma" d="M50,5 L88,18 V54 C88,84 70,104 50,114 C30,104 12,84 12,54 V18 Z" fill="#D35400" stroke="#E8B923" stroke-width="3"/>
+  <clipPath id="av-corte"><use href="#av-forma"/></clipPath>
+  <g clip-path="url(#av-corte)" fill="#F3E7D3" opacity="0.85">
+    <rect x="-10" y="0" width="14" height="140" transform="rotate(20 50 60)"/>
+    <rect x="10" y="0" width="14" height="140" transform="rotate(20 50 60)"/>
+    <rect x="30" y="0" width="14" height="140" transform="rotate(20 50 60)"/>
+  </g>
+  <text x="50" y="100" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="15" fill="#1A1206">AV</text>
+</svg>

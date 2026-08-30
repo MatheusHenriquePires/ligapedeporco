@@ -4,8 +4,8 @@ import { exigirAdmin } from '../auth.js';
 export default async function rotasPartidas(app) {
   app.get('/proximas', async () =>
     query(
-      `SELECT p.*, r.numero AS rodada, c.nome AS casa_nome, c.cor AS casa_cor,
-              f.nome AS fora_nome, f.cor AS fora_cor
+      `SELECT p.*, r.numero AS rodada, c.nome AS casa_nome, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
+              f.nome AS fora_nome, f.cor AS fora_cor, f.escudo_url AS fora_escudo
        FROM partidas p
        JOIN rodadas r ON r.id = p.rodada_id
        JOIN times c ON c.id = p.time_casa_id
@@ -16,8 +16,8 @@ export default async function rotasPartidas(app) {
 
   app.get('/ultimos-resultados', async () =>
     query(
-      `SELECT p.*, r.numero AS rodada, c.nome AS casa_nome, c.cor AS casa_cor,
-              f.nome AS fora_nome, f.cor AS fora_cor
+      `SELECT p.*, r.numero AS rodada, c.nome AS casa_nome, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
+              f.nome AS fora_nome, f.cor AS fora_cor, f.escudo_url AS fora_escudo
        FROM partidas p
        JOIN rodadas r ON r.id = p.rodada_id
        JOIN times c ON c.id = p.time_casa_id

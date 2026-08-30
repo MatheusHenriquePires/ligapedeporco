@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <path d="M50,5 L88,18 V54 C88,84 70,104 50,114 C30,104 12,84 12,54 V18 Z" fill="#1F5E45" stroke="#E8B923" stroke-width="3"/>
+  <g fill="#F3E7D3" opacity="0.9">
+    <rect x="26" y="46" width="10" height="34"/>
+    <rect x="38" y="34" width="10" height="46"/>
+    <rect x="52" y="42" width="10" height="38"/>
+    <rect x="64" y="52" width="10" height="28"/>
+  </g>
+  <text x="50" y="102" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="15" fill="#F3E7D3">CA</text>
+</svg>

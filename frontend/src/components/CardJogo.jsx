@@ -23,13 +23,13 @@ export default function CardJogo({ jogo }) {
       </div>
 
       <div className="linha-time">
-        <Escudo time={{ nome: jogo.casa_nome, cor: jogo.casa_cor }} tamanho={24} />
+        <Escudo time={{ nome: jogo.casa_nome, cor: jogo.casa_cor, escudo_url: jogo.casa_escudo }} tamanho={24} />
         <span className={`nome ${casaPerdeu ? 'perdeu' : ''}`}>{jogo.casa_nome}</span>
         <span className="gols">{encerrada || aoVivo ? jogo.gols_casa ?? 0 : '–'}</span>
       </div>
 
       <div className="linha-time">
-        <Escudo time={{ nome: jogo.fora_nome, cor: jogo.fora_cor }} tamanho={24} />
+        <Escudo time={{ nome: jogo.fora_nome, cor: jogo.fora_cor, escudo_url: jogo.fora_escudo }} tamanho={24} />
         <span className={`nome ${foraPerdeu ? 'perdeu' : ''}`}>{jogo.fora_nome}</span>
         <span className="gols">{encerrada || aoVivo ? jogo.gols_fora ?? 0 : '–'}</span>
       </div>

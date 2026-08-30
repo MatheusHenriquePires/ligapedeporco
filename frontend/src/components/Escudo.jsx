@@ -8,7 +8,7 @@ export default function Escudo({ time, tamanho = 46 }) {
         src={time.escudo_url}
         alt={`Escudo do ${time.nome}`}
         className="escudo"
-        style={{ width: tamanho, height: tamanho, objectFit: 'cover' }}
+        style={{ width: tamanho, height: tamanho, objectFit: 'contain' }}
       />
     );
   }

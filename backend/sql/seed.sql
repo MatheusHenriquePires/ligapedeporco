@@ -1,11 +1,11 @@
 -- Dados de exemplo da Liga Pé de Porco
-INSERT INTO times (nome, slug, apelido, presidente, tecnico, cor, descricao) VALUES
- ('Vintém FC',          'vintem-fc',           'Os Veteranos',  'Ricardo Costa', 'Zé Almeida',    '#C0392B', 'Time mais antigo da liga, campeão da temporada de estreia.'),
- ('União Relâmpago',    'uniao-relampago',     'Os Elétricos',  'Marli Andrade', 'Nelson Prado',  '#E8B33D', 'Ataque mais veloz da competição.'),
- ('Cidade Alta FC',     'cidade-alta-fc',      'Os Guerreiros', 'Bento Ferraz',  'Tiago Nery',    '#1F5E45', 'Sobe de produção sempre no segundo tempo.'),
- ('Real Estrela',       'real-estrela',        'Realeza',       'Vitor Alves',   'Mestre Paulo',  '#7D3C98', 'Elenco mais jovem da liga.'),
- ('Novo Horizonte FC',  'novo-horizonte-fc',   'Os Bebês',      'Ana Ribeiro',   'Careca',        '#2E86C1', 'Recém-promovido, joga sem medo.'),
- ('Atlético Vila Nova', 'atletico-vila-nova',  'Os Guardiões',  'Juca Farias',   'Bigode',        '#D35400', 'A defesa mais fechada da temporada.');
+INSERT INTO times (nome, slug, apelido, presidente, tecnico, cor, escudo_url, descricao) VALUES
+ ('Vintém FC',          'vintem-fc',           'Os Veteranos',  'Ricardo Costa', 'Zé Almeida',    '#C0392B', '/escudos/vintem-fc.svg',          'Time mais antigo da liga, campeão da temporada de estreia.'),
+ ('União Relâmpago',    'uniao-relampago',     'Os Elétricos',  'Marli Andrade', 'Nelson Prado',  '#E8B33D', '/escudos/uniao-relampago.svg',    'Ataque mais veloz da competição.'),
+ ('Cidade Alta FC',     'cidade-alta-fc',      'Os Guerreiros', 'Bento Ferraz',  'Tiago Nery',    '#1F5E45', '/escudos/cidade-alta-fc.svg',     'Sobe de produção sempre no segundo tempo.'),
+ ('Real Estrela',       'real-estrela',        'Realeza',       'Vitor Alves',   'Mestre Paulo',  '#7D3C98', '/escudos/real-estrela.svg',       'Elenco mais jovem da liga.'),
+ ('Novo Horizonte FC',  'novo-horizonte-fc',   'Os Bebês',      'Ana Ribeiro',   'Careca',        '#2E86C1', '/escudos/novo-horizonte-fc.svg',  'Recém-promovido, joga sem medo.'),
+ ('Atlético Vila Nova', 'atletico-vila-nova',  'Os Guardiões',  'Juca Farias',   'Bigode',        '#D35400', '/escudos/atletico-vila-nova.svg', 'A defesa mais fechada da temporada.');
 
 INSERT INTO jogadores (time_id, nome, apelido, posicao, numero, idade, gols, assistencias, destaque) VALUES
  (1, 'Rafael Menezes', 'Rafinha',    'PIVO',    9,  27, 12, 4, true),

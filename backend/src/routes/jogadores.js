@@ -17,7 +17,7 @@ export default async function rotasJogadores(app) {
   app.get('/artilharia', async () =>
     query(
       `SELECT j.id, j.nome, j.apelido, j.gols, j.assistencias, j.foto_url,
-              t.nome AS time_nome, t.cor AS time_cor
+              t.nome AS time_nome, t.cor AS time_cor, t.escudo_url AS time_escudo
        FROM jogadores j LEFT JOIN times t ON t.id = j.time_id
        WHERE j.gols > 0 ORDER BY j.gols DESC, j.assistencias DESC LIMIT 10`
     )

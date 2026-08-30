@@ -24,7 +24,7 @@ export default function Times() {
           const posicao = tabela.findIndex((t) => t.time_id === time.id) + 1;
           return (
             <Link key={time.id} to={`/times/${time.slug}`} className="card-time">
-              <FotoPlaceholder cor={time.cor} />
+              <FotoPlaceholder cor={time.cor} escudoUrl={time.escudo_url} />
               <span className="veu" />
               <span className="barra" style={{ background: time.cor }} />
               {posicao > 0 && <span className="pos-badge">{posicao}º</span>}

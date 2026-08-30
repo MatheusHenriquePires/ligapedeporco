@@ -133,14 +133,14 @@ export default function Home() {
             </div>
             <div className="placar">
               <div className="lado">
-                <Escudo time={{ nome: destaque.casa_nome, cor: destaque.casa_cor }} tamanho={60} />
+                <Escudo time={{ nome: destaque.casa_nome, cor: destaque.casa_cor, escudo_url: destaque.casa_escudo }} tamanho={60} />
                 <h3>{destaque.casa_nome}</h3>
               </div>
               <div className="nums">
                 {aoVivo ? (<>{destaque.gols_casa ?? 0}<em>—</em>{destaque.gols_fora ?? 0}</>) : <em>vs</em>}
               </div>
               <div className="lado">
-                <Escudo time={{ nome: destaque.fora_nome, cor: destaque.fora_cor }} tamanho={60} />
+                <Escudo time={{ nome: destaque.fora_nome, cor: destaque.fora_cor, escudo_url: destaque.fora_escudo }} tamanho={60} />
                 <h3>{destaque.fora_nome}</h3>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function Home() {
             const posicao = tabela.findIndex((t) => t.time_id === time.id) + 1;
             return (
               <Link key={time.id} to={`/times/${time.slug}`} className="card-time">
-                <FotoPlaceholder cor={time.cor} />
+                <FotoPlaceholder cor={time.cor} escudoUrl={time.escudo_url} />
                 <span className="veu" />
                 <span className="barra" style={{ background: time.cor }} />
                 {posicao > 0 && <span className="pos-badge">{posicao}º</span>}
@@ -208,7 +208,7 @@ export default function Home() {
             {artilharia.slice(0, 8).map((j) => (
               <div key={j.id} className="jog">
                 <div className="foto">
-                  <FotoPlaceholder cor={j.time_cor} />
+                  <FotoPlaceholder cor={j.time_cor} escudoUrl={j.time_escudo} />
                   <span className="cor" style={{ background: j.time_cor }} />
                   <span className="num">{j.gols}</span>
                 </div>
