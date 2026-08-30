@@ -75,6 +75,35 @@ A classificação é uma view SQL calculada a partir das partidas encerradas (vi
 - O token vive 8h e fica em `sessionStorage` — some ao fechar a aba.
 - Em produção: use HTTPS, um `JWT_SECRET` aleatório e restrinja `CORS_ORIGIN` ao domínio real.
 
+## Deploy (Vercel)
+
+O projeto está no ar em produção servido por um único projeto Vercel: o frontend
+como site estático e o backend Fastify como uma função serverless.
+
+**Por que o deploy não é automático via GitHub:** o Vercel tenta detectar
+automaticamente "múltiplos serviços" nesse monorepo (Vite em `frontend/` +
+Fastify em `backend/`) e isso quebra o processo de build padrão dele. A saída
+foi montar o build manualmente no formato da [Build Output
+API](https://vercel.com/docs/build-output-api) do Vercel (`scripts/build-vercel.js`),
+empacotando a API com esbuild, e enviar esse resultado pronto — o que ignora
+completamente essa detecção.
+
+```bash
+npm run deploy
+```
+
+Esse comando builda o frontend, empacota a API (`backend/api/handler.cjs`) num
+único arquivo com esbuild, monta `.vercel/output/` e publica com
+`vercel deploy --prebuilt --prod`. Rode sempre que quiser atualizar produção
+depois de alterar `main`.
+
+**Variáveis de ambiente** (Vercel → Settings → Environment Variables):
+- `DATABASE_URL` — use a connection string do **connection pooler** do
+  Supabase (`aws-0-<região>.pooler.supabase.com`), não a conexão direta
+  (`db.<ref>.supabase.co`). A direta usa só IPv6 e as funções serverless do
+  Vercel não têm rota IPv6, então a conexão nunca resolve (`ENOTFOUND`).
+- `JWT_SECRET` — mesmo valor usado localmente.
+
 ## Próximos passos sugeridos
 
 - Upload de escudos e fotos (S3 ou Cloudinary) no lugar de URL manual.

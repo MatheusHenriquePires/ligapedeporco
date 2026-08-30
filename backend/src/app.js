@@ -1,6 +1,11 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'node:url';
+
+if (!process.env.VERCEL) {
+  config({ path: fileURLToPath(new URL('../.env', import.meta.url)) });
+}
 
 import rotasAuth from './routes/auth.js';
 import rotasTimes from './routes/times.js';

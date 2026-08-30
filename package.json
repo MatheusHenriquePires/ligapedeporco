@@ -1,8 +1,8 @@
 {
   "name": "liga-pe-de-porco",
   "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ]
+  "type": "module",
+  "scripts": {
+    "deploy": "npm run build --prefix frontend && node scripts/build-vercel.js && npx vercel deploy --prebuilt --prod"
+  }
 }

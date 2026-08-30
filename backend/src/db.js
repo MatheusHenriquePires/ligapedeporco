@@ -1,5 +1,10 @@
 import pg from 'pg';
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'node:url';
+
+if (!process.env.VERCEL) {
+  config({ path: fileURLToPath(new URL('../.env', import.meta.url)) });
+}
 
 export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
