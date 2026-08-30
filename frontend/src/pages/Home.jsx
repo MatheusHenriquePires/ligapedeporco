@@ -12,6 +12,7 @@ import { api } from '../api.js';
 import Escudo from '../components/Escudo.jsx';
 import CardJogo from '../components/CardJogo.jsx';
 import FotoPlaceholder from '../components/FotoPlaceholder.jsx';
+import FotoJogador from '../components/FotoJogador.jsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -31,6 +32,17 @@ function Contador({ valor }) {
   }, [valor]);
   return <span className="n">{n}</span>;
 }
+
+function FundoLogo() {
+  return (
+    <div className="fundo-logo" aria-hidden="true">
+      <img src="/logo.png" alt="" className="fundo-logo-img" />
+    </div>
+  );
+}
+
+const rotuloRodada = (jogo) =>
+  jogo.rodada_fase && jogo.rodada_fase !== 'LIGA' ? jogo.rodada_nome : `Rodada ${jogo.rodada}`;
 
 function formaDoTime(timeId, partidasEncerradas) {
   return partidasEncerradas
@@ -63,6 +75,13 @@ export default function Home() {
     api('/rodadas').then(setRodadas).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      api('/partidas/proximas').then(setProximas).catch(() => {});
+    }, 15000);
+    return () => clearInterval(intervalo);
+  }, []);
+
   const destaque = proximas.find((j) => j.status === 'AO_VIVO') ?? proximas[0];
   const aoVivo = destaque?.status === 'AO_VIVO';
 
@@ -92,16 +111,18 @@ export default function Home() {
   };
 
   return (
-    <div className="container">
+    <div className="pagina-inicial">
+      <FundoLogo />
+      <div className="container">
       <header className="hero">
         <div>
           {destaque ? (
             <span className="etiqueta">
               {aoVivo && <span className="pulso" />}
-              {aoVivo ? 'Partida rolando agora' : `Rodada ${destaque.rodada} chegando`}
+              {aoVivo ? 'Partida rolando agora' : `${rotuloRodada(destaque)} chegando`}
             </span>
           ) : (
-            <span className="etiqueta">Temporada 2026</span>
+            <span className="etiqueta">Temporada 2026.2</span>
           )}
           <h1>Todo sábado<br />a liga <em>ferve</em></h1>
           <p>
@@ -128,7 +149,7 @@ export default function Home() {
                 {aoVivo ? 'Ao vivo' : 'Próximo jogo'}
               </span>
               <span className="live-loc"><Clock className="i" />
-                {aoVivo ? `Rodada ${destaque.rodada}` : new Date(destaque.horario).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                {aoVivo ? rotuloRodada(destaque) : new Date(destaque.horario).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
             <div className="placar">
@@ -144,7 +165,7 @@ export default function Home() {
                 <h3>{destaque.fora_nome}</h3>
               </div>
             </div>
-            <div className="min"><span>Rodada {destaque.rodada}</span><span>{destaque.status === 'AGENDADA' ? 'Agendada' : destaque.status}</span></div>
+            <div className="min"><span>{rotuloRodada(destaque)}</span><span>{destaque.status === 'AGENDADA' ? 'Agendada' : destaque.status}</span></div>
           </div>
         )}
       </header>
@@ -208,7 +229,7 @@ export default function Home() {
             {artilharia.slice(0, 8).map((j) => (
               <div key={j.id} className="jog">
                 <div className="foto">
-                  <FotoPlaceholder cor={j.time_cor} escudoUrl={j.time_escudo} />
+                  <FotoJogador jogador={j} corTime={j.time_cor} tamanho={120} />
                   <span className="cor" style={{ background: j.time_cor }} />
                   <span className="num">{j.gols}</span>
                 </div>
@@ -294,6 +315,16 @@ export default function Home() {
         </div>
         {tabela.length === 0 && <p className="vazio">A tabela aparece assim que o primeiro placar for lançado.</p>}
       </section>
+
+      <section className="secao patrocinadores">
+        <div className="secao-topo"><div><h2 style={{ fontSize: 15 }}>Apoio</h2><p>Marcas que apoiam a liga</p></div></div>
+        <div className="patrocinadores-fita">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div key={n} className="patrocinador-slot">Patrocinador {n}</div>
+          ))}
+        </div>
+      </section>
+      </div>
     </div>
   );
 }

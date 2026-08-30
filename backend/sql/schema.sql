@@ -1,4 +1,5 @@
 -- Liga Pé de Porco :: esquema do banco
+DROP TABLE IF EXISTS gols_partida CASCADE;
 DROP TABLE IF EXISTS partidas CASCADE;
 DROP TABLE IF EXISTS jogadores CASCADE;
 DROP TABLE IF EXISTS rodadas CASCADE;
@@ -49,6 +50,7 @@ CREATE TABLE rodadas (
   data          DATE,
   local         TEXT,
   status        TEXT NOT NULL DEFAULT 'AGENDADA', -- AGENDADA | EM_ANDAMENTO | ENCERRADA
+  fase          TEXT NOT NULL DEFAULT 'LIGA',      -- LIGA | SEMIFINAL | FINAL
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -61,18 +63,36 @@ CREATE TABLE partidas (
   gols_fora     INTEGER,
   horario       TIMESTAMPTZ,
   status        TEXT NOT NULL DEFAULT 'AGENDADA', -- AGENDADA | AO_VIVO | ENCERRADA
+  vencedor_id   INTEGER REFERENCES times(id) ON DELETE SET NULL, -- só usado em empate de mata-mata
+  decisao       TEXT,                              -- PENALTIS | null
+  penaltis_casa INTEGER,
+  penaltis_fora INTEGER,
   CHECK (time_casa_id <> time_fora_id)
+);
+
+CREATE TABLE gols_partida (
+  id            SERIAL PRIMARY KEY,
+  partida_id    INTEGER NOT NULL REFERENCES partidas(id) ON DELETE CASCADE,
+  jogador_id    INTEGER NOT NULL REFERENCES jogadores(id) ON DELETE CASCADE,
+  time_id       INTEGER NOT NULL REFERENCES times(id) ON DELETE CASCADE,
+  criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_jogadores_time ON jogadores(time_id);
 CREATE INDEX idx_partidas_rodada ON partidas(rodada_id);
+CREATE INDEX idx_gols_partida_partida ON gols_partida(partida_id);
 
--- Classificação calculada a partir das partidas encerradas
+-- Classificação calculada a partir das partidas encerradas da fase de liga
+-- (semifinal e final não entram na tabela)
 CREATE OR REPLACE VIEW classificacao AS
 WITH resultados AS (
-  SELECT time_casa_id AS time_id, gols_casa AS pro, gols_fora AS contra FROM partidas WHERE status = 'ENCERRADA'
+  SELECT p.time_casa_id AS time_id, p.gols_casa AS pro, p.gols_fora AS contra
+  FROM partidas p JOIN rodadas r ON r.id = p.rodada_id
+  WHERE p.status = 'ENCERRADA' AND r.fase = 'LIGA'
   UNION ALL
-  SELECT time_fora_id AS time_id, gols_fora AS pro, gols_casa AS contra FROM partidas WHERE status = 'ENCERRADA'
+  SELECT p.time_fora_id AS time_id, p.gols_fora AS pro, p.gols_casa AS contra
+  FROM partidas p JOIN rodadas r ON r.id = p.rodada_id
+  WHERE p.status = 'ENCERRADA' AND r.fase = 'LIGA'
 )
 SELECT
   t.id            AS time_id,

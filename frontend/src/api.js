@@ -39,3 +39,21 @@ export async function api(caminho, { method = 'GET', body, auth = false } = {}) 
   }
   return dados;
 }
+
+export async function apiUpload(caminho, arquivo) {
+  const dados = new FormData();
+  dados.append('file', arquivo);
+
+  const resposta = await fetch(BASE + caminho, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: dados,
+  });
+
+  const corpo = await resposta.json().catch(() => null);
+  if (!resposta.ok) {
+    if (resposta.status === 401) limparSessao();
+    throw new Error(corpo?.erro || 'Não foi possível enviar a imagem.');
+  }
+  return corpo;
+}

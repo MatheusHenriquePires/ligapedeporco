@@ -19,7 +19,9 @@ export default function CardJogo({ jogo }) {
           {aoVivo && <span className="pulso" />}
           {aoVivo ? 'Ao vivo' : encerrada ? 'Encerrada' : 'Agendada'}
         </span>
-        <span className="rodada">Rodada {jogo.rodada ?? jogo.rodada_numero ?? '—'}</span>
+        <span className="rodada">
+          {jogo.rodada_fase && jogo.rodada_fase !== 'LIGA' ? jogo.rodada_nome : `Rodada ${jogo.rodada ?? jogo.rodada_numero ?? '—'}`}
+        </span>
       </div>
 
       <div className="linha-time">

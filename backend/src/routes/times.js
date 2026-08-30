@@ -1,5 +1,6 @@
 import { query, one } from '../db.js';
 import { exigirAdmin } from '../auth.js';
+import { validarImagem, enviarImagem, removerImagem, caminhoDaUrlPublica } from '../storage.js';
 
 const slugify = (texto) =>
   texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -60,5 +61,43 @@ export default async function rotasTimes(app) {
   app.delete('/:id', { preHandler: exigirAdmin }, async (request, reply) => {
     await query('DELETE FROM times WHERE id = $1', [request.params.id]);
     return reply.code(204).send();
+  });
+
+  app.post('/:id/escudo', { preHandler: exigirAdmin }, async (request, reply) => {
+    const time = await one('SELECT * FROM times WHERE id = $1', [request.params.id]);
+    if (!time) return reply.code(404).send({ erro: 'Time não encontrado.' });
+
+    const arquivo = await request.file();
+    if (!arquivo) return reply.code(400).send({ erro: 'Nenhum arquivo enviado.' });
+    const buffer = await arquivo.toBuffer();
+
+    validarImagem({ mimetype: arquivo.mimetype, tamanho: buffer.length });
+
+    const urlPublica = await enviarImagem({
+      pasta: 'times', id: time.id, buffer, mimetype: arquivo.mimetype,
+    });
+
+    const caminhoAntigo = caminhoDaUrlPublica(time.escudo_url);
+    if (caminhoAntigo) await removerImagem(caminhoAntigo).catch(() => {});
+
+    const atualizado = await one(
+      'UPDATE times SET escudo_url = $2 WHERE id = $1 RETURNING *',
+      [time.id, urlPublica]
+    );
+    return atualizado;
+  });
+
+  app.delete('/:id/escudo', { preHandler: exigirAdmin }, async (request, reply) => {
+    const time = await one('SELECT * FROM times WHERE id = $1', [request.params.id]);
+    if (!time) return reply.code(404).send({ erro: 'Time não encontrado.' });
+
+    const caminho = caminhoDaUrlPublica(time.escudo_url);
+    if (caminho) await removerImagem(caminho).catch(() => {});
+
+    const atualizado = await one(
+      'UPDATE times SET escudo_url = NULL WHERE id = $1 RETURNING *',
+      [time.id]
+    );
+    return atualizado;
   });
 }

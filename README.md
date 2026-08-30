@@ -103,9 +103,13 @@ depois de alterar `main`.
   (`db.<ref>.supabase.co`). A direta usa só IPv6 e as funções serverless do
   Vercel não têm rota IPv6, então a conexão nunca resolve (`ENOTFOUND`).
 - `JWT_SECRET` — mesmo valor usado localmente.
+- `SUPABASE_URL` — URL do projeto Supabase (`https://<ref>.supabase.co`).
+- `SUPABASE_SERVICE_ROLE_KEY` — a **service role key** (Project Settings → API →
+  `service_role`, não a `anon`). Usada só pelo backend para gravar/apagar
+  arquivos no bucket `escudos` do Supabase Storage; **nunca** deve ir para o
+  build do frontend nem ser exposta no navegador.
 
 ## Próximos passos sugeridos
 
-- Upload de escudos e fotos (S3 ou Cloudinary) no lugar de URL manual.
 - Tabela de eventos de partida (gol, assistência, cartão) para calcular estatísticas por jogador automaticamente.
 - Fase de mata-mata a partir dos 4 primeiros da tabela.

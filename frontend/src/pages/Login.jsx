@@ -29,7 +29,7 @@ export default function Login() {
   return (
     <div className="container">
       <div className="login-caixa">
-        <img src="/logo.jpg" alt="Liga Pé de Porco" className="brasao-grande" />
+        <img src="/logo.png" alt="Liga Pé de Porco" className="brasao-grande" />
         <div className="card">
         <span className="etiqueta">Área restrita</span>
         <h2 style={{ fontSize: 30, margin: '16px 0 6px' }}>Painel da liga</h2>

@@ -29,8 +29,15 @@ h1,h2,h3,h4{font-family:var(--display);font-weight:800;letter-spacing:-.03em;lin
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--acento);outline-offset:2px}
-.container{width:min(1180px,92vw);margin:0 auto}
-.i{width:16px;height:16px;stroke-width:2}
+.container{width:min(1180px,92vw);margin:0 auto;position:relative;z-index:1}
+
+/* ---------- fundo decorativo da home (logo com profundidade) ---------- */
+.pagina-inicial{position:relative}
+.fundo-logo{position:fixed;top:0;right:0;width:min(1200px,95vw);aspect-ratio:1/1;transform:translateX(50%);z-index:0;pointer-events:none;overflow:hidden}
+.fundo-logo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.5;filter:brightness(.45) saturate(.85) drop-shadow(0 0 60px rgba(232,185,35,.15))}
+@media (max-width:860px){.fundo-logo{right:auto;left:50%;transform:translate(-50%,-50%);width:140vw}}
+
+.i{width:13px;height:13px;stroke-width:2}
 
 /* ---------- nav ---------- */
 .topo{position:sticky;top:0;z-index:50;background:rgba(10,11,13,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--linha)}
@@ -131,6 +138,8 @@ button{font-family:inherit;cursor:pointer}
 .jog{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);overflow:hidden;transition:.2s}
 .jog:hover{border-color:var(--acento);transform:translateY(-4px)}
 .jog .foto{position:relative;aspect-ratio:1/1;overflow:hidden;background:var(--s3);display:grid;place-items:center}
+.jog .foto .foto-jogador{position:absolute;inset:0;width:100%!important;height:100%!important}
+.jog .foto .foto-jogador-marcador{font-size:40px!important}
 .jog .num{position:absolute;right:10px;bottom:6px;font-family:var(--display);font-weight:800;font-size:40px;line-height:1;color:rgba(var(--texto-rgb),.5)}
 .jog .cor{position:absolute;left:0;top:0;bottom:0;width:4px}
 .jog .txt{padding:13px 15px 15px}
@@ -138,6 +147,42 @@ button{font-family:inherit;cursor:pointer}
 .jog .pos{font-size:12px;color:var(--fraco);margin-top:3px}
 .jog .g{margin-top:11px;display:flex;gap:14px;font-family:var(--dados);font-size:12px;color:var(--suave)}
 .jog .g b{color:var(--acento);font-weight:700}
+
+/* ---------- elenco interativo (detalhe do time) ---------- */
+.elenco-tiras{display:flex;gap:10px;overflow-x:auto;padding:8px 4px 16px;margin-bottom:20px;border-bottom:1px solid var(--linha)}
+.elenco-tira{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;flex:none;width:64px;background:none;border:none;padding:4px 2px 8px;border-bottom:2px solid transparent;color:var(--fraco);font-family:var(--dados);font-size:11px;transition:color .18s,transform .18s}
+.elenco-tira .foto-jogador{position:relative;z-index:1;transition:box-shadow .18s,transform .18s}
+.elenco-tira:hover{color:var(--texto);transform:translateY(-2px)}
+.elenco-tira:hover .foto-jogador{box-shadow:0 0 0 2px var(--linha-f)}
+.elenco-tira.ativa{color:var(--texto);border-bottom-color:var(--acento);transform:translateY(-2px)}
+.elenco-tira .foto-jogador{border-radius:50%}
+.elenco-tira.ativa::before{
+  content:'';position:absolute;top:0;left:50%;width:62px;height:62px;transform:translateX(-50%);
+  border-radius:50%;z-index:0;
+  background:conic-gradient(from 0deg, var(--cor-time,var(--acento)), transparent 60%, var(--cor-time,var(--acento)));
+  animation:anel-girar 2.4s linear infinite;
+}
+
+.foto-jogador{position:relative;overflow:hidden;flex:none}
+.foto-jogador img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .3s}
+.foto-jogador-marcador{position:absolute;inset:0;background:var(--s3);border:1px solid var(--linha-f);display:grid;place-items:center;font-family:var(--display);font-weight:800;border-radius:inherit;overflow:hidden}
+.foto-jogador-marcador.carregando::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg, transparent 30%, rgba(var(--texto-rgb),.16) 50%, transparent 70%);
+  background-size:200% 100%;
+  animation:shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer{from{background-position:150% 0}to{background-position:-50% 0}}
+@keyframes anel-girar{to{transform:translateX(-50%) rotate(360deg)}}
+
+.elenco-detalhe{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);padding:24px;display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;animation:elenco-entrada .35s ease both}
+@keyframes elenco-entrada{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.elenco-detalhe-foto{width:clamp(140px,22vw,220px);aspect-ratio:1/1;border-radius:18px;transition:box-shadow .3s}
+.elenco-detalhe-foto .foto-jogador{width:100%;height:100%;border-radius:18px}
+.elenco-detalhe-info{flex:1;min-width:240px}
+.elenco-detalhe .badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.elenco-detalhe .stats .n.contagem-pronta{animation:numero-estouro .35s ease}
+@keyframes numero-estouro{0%{transform:scale(1)}45%{transform:scale(1.28)}100%{transform:scale(1)}}
 
 /* ---------- painel de gráfico ---------- */
 .painel-grafico{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);padding:20px}
@@ -178,6 +223,26 @@ button{font-family:inherit;cursor:pointer}
 .aviso.erro{border-color:rgba(255,77,109,.4);color:var(--quente);background:var(--quente-esc)}
 .aviso.ok{border-color:rgba(0,232,143,.35);color:var(--acento);background:var(--acento-esc)}
 
+/* ---------- modal ---------- */
+.modal-fundo{position:fixed;inset:0;z-index:80;background:rgba(10,11,13,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.modal-caixa{width:100%;border-radius:var(--r);animation:modal-entrar .16s ease-out}
+.modal-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}
+.modal-topo h3{font-size:18px;font-weight:700}
+.modal-corpo{max-height:min(76vh,720px);overflow-y:auto}
+@keyframes modal-entrar{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.admin-lista-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.admin-lista-topo input{max-width:260px}
+.item .escudo,.item .foto-jogador{flex:none}
+
+.upload-campo{display:grid;gap:10px}
+.upload-previa{display:flex;align-items:center;gap:12px}
+.upload-previa .escudo,.upload-previa .foto-jogador{width:56px;height:56px;border-radius:10px}
+.upload-acoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.upload-acoes input[type="file"]{font-size:12px;color:var(--fraco)}
+.upload-divisor{display:flex;align-items:center;gap:10px;color:var(--fraco);font-family:var(--dados);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.upload-divisor::before,.upload-divisor::after{content:'';flex:1;height:1px;background:var(--linha)}
+
 /* ---------- painel admin ---------- */
 .admin{padding:32px 0 72px}
 .admin-topo{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
@@ -194,6 +259,26 @@ button{font-family:inherit;cursor:pointer}
 .item .info small{font-family:var(--dados);font-size:11px;color:var(--fraco)}
 .item .acoes{margin-left:auto;display:flex;gap:6px}
 .acoes input{padding:7px 8px;border-radius:7px;text-align:center;border:1px solid var(--linha);background:var(--s2);color:var(--texto);font-family:var(--dados);font-size:14px}
+
+.ao-vivo-painel{display:flex;flex-direction:column;gap:8px;width:100%;padding:10px;border:1px solid var(--quente-esc);border-radius:10px;background:var(--s2)}
+.ao-vivo-marcar{display:flex;gap:8px}
+.ao-vivo-marcar select{flex:1;min-width:0}
+.ao-vivo-lista{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--suave);font-family:var(--dados)}
+.ao-vivo-lista li{display:flex;align-items:center;gap:6px}
+.ao-vivo-lista li .i{width:13px;height:13px;color:var(--quente);flex:none}
+.ao-vivo-lista li button{margin-left:auto}
+
+/* ---------- patrocinadores ---------- */
+.patrocinadores{padding-top:32px;padding-bottom:36px}
+.patrocinadores-fita{display:flex;gap:14px;flex-wrap:wrap}
+.patrocinador-slot{
+  flex:1 1 140px;min-width:120px;height:60px;
+  display:grid;place-items:center;text-align:center;
+  border:1px dashed var(--linha-f);border-radius:var(--r);
+  color:var(--fraco);font-family:var(--dados);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  filter:grayscale(1);opacity:.6;transition:opacity .2s,color .2s,filter .2s;
+}
+.patrocinador-slot:hover{opacity:1;color:var(--texto);filter:grayscale(0)}
 
 /* ---------- login ---------- */
 .login-caixa{width:min(420px,92vw);margin:56px auto 90px;text-align:center}

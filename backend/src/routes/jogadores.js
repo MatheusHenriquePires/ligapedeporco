@@ -1,5 +1,6 @@
 import { query, one } from '../db.js';
 import { exigirAdmin } from '../auth.js';
+import { validarImagem, enviarImagem, removerImagem, caminhoDaUrlPublica } from '../storage.js';
 
 export default async function rotasJogadores(app) {
   app.get('/', async (request) => {
@@ -52,5 +53,43 @@ export default async function rotasJogadores(app) {
   app.delete('/:id', { preHandler: exigirAdmin }, async (request, reply) => {
     await query('DELETE FROM jogadores WHERE id = $1', [request.params.id]);
     return reply.code(204).send();
+  });
+
+  app.post('/:id/foto', { preHandler: exigirAdmin }, async (request, reply) => {
+    const jogador = await one('SELECT * FROM jogadores WHERE id = $1', [request.params.id]);
+    if (!jogador) return reply.code(404).send({ erro: 'Jogador não encontrado.' });
+
+    const arquivo = await request.file();
+    if (!arquivo) return reply.code(400).send({ erro: 'Nenhum arquivo enviado.' });
+    const buffer = await arquivo.toBuffer();
+
+    validarImagem({ mimetype: arquivo.mimetype, tamanho: buffer.length });
+
+    const urlPublica = await enviarImagem({
+      pasta: 'jogadores', id: jogador.id, buffer, mimetype: arquivo.mimetype,
+    });
+
+    const caminhoAntigo = caminhoDaUrlPublica(jogador.foto_url);
+    if (caminhoAntigo) await removerImagem(caminhoAntigo).catch(() => {});
+
+    const atualizado = await one(
+      'UPDATE jogadores SET foto_url = $2 WHERE id = $1 RETURNING *',
+      [jogador.id, urlPublica]
+    );
+    return atualizado;
+  });
+
+  app.delete('/:id/foto', { preHandler: exigirAdmin }, async (request, reply) => {
+    const jogador = await one('SELECT * FROM jogadores WHERE id = $1', [request.params.id]);
+    if (!jogador) return reply.code(404).send({ erro: 'Jogador não encontrado.' });
+
+    const caminho = caminhoDaUrlPublica(jogador.foto_url);
+    if (caminho) await removerImagem(caminho).catch(() => {});
+
+    const atualizado = await one(
+      'UPDATE jogadores SET foto_url = NULL WHERE id = $1 RETURNING *',
+      [jogador.id]
+    );
+    return atualizado;
   });
 }

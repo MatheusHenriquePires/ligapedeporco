@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'node:url';
 
@@ -19,6 +20,14 @@ export async function buildApp() {
 
   await app.register(cors, {
     origin: process.env.CORS_ORIGIN?.split(',') ?? true,
+  });
+
+  await app.register(multipart, { limits: { fileSize: 2 * 1024 * 1024, files: 1 } });
+
+  app.setErrorHandler((erro, request, reply) => {
+    const status = erro.statusCode ?? 500;
+    if (status >= 500) app.log.error(erro);
+    reply.code(status).send({ erro: erro.message || 'Erro interno.' });
   });
 
   app.get('/api/health', async () => ({ ok: true, liga: 'Liga Pé de Porco' }));

@@ -23,7 +23,7 @@ function Topo() {
     <header className="topo">
       <div className="container topo-inner">
         <NavLink to="/" className="marca">
-          <img src="/logo.jpg" alt="Liga Pé de Porco" className="brasao" />
+          <img src="/logo.png" alt="Liga Pé de Porco" className="brasao" />
           Liga Pé de Porco
         </NavLink>
         <nav className="nav">
@@ -67,6 +67,7 @@ export default function App() {
       </main>
       <footer className="rodape container">
         <span>Liga Pé de Porco · Temporada 2026</span>
+         <span>Desenvolvido por Matheus - <a href="https://matheushenriquepires.github.io/portifolio/" target="_blank" rel="noopener noreferrer">Contato</a> </span>
       </footer>
     </>
   );
