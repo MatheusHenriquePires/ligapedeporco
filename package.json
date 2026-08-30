@@ -1,0 +1,11 @@
+{
+  "name": "liga-pe-de-porco",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=frontend"
+  }
+}

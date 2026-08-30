@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: liga_do_porco
+    ports:
+      - "5432:5432"
+    volumes:
+      - dados_liga:/var/lib/postgresql/data
+
+volumes:
+  dados_liga:

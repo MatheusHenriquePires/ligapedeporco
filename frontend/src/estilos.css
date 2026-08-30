@@ -1,0 +1,214 @@
+/* ================= Liga Pé de Porco — painel esportivo ================= */
+:root{
+  --bg:#0A0B0D;
+  --s1:#111316;
+  --s2:#16191D;
+  --s3:#1E2228;
+  --linha:#23272E;
+  --linha-f:#31363F;
+  --texto:#F4F6F8;
+  --texto-rgb:244,246,248;
+  --suave:#A2A9B4;
+  --fraco:#6B727D;
+  --acento:#E8B923;
+  --acento-claro:#F5D467;
+  --acento-esc:#3D2F08;
+  --acento-tx:#1A1206;
+  --quente:#FF4D6D;
+  --quente-esc:#3D1420;
+  --r:14px;
+
+  --display:'Sora', sans-serif;
+  --corpo:'Inter', system-ui, sans-serif;
+  --dados:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--texto);font-family:var(--corpo);font-size:16px;-webkit-font-smoothing:antialiased;line-height:1.5}
+h1,h2,h3,h4{font-family:var(--display);font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:0}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.container{width:min(1180px,92vw);margin:0 auto}
+.i{width:16px;height:16px;stroke-width:2}
+
+/* ---------- nav ---------- */
+.topo{position:sticky;top:0;z-index:50;background:rgba(10,11,13,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--linha)}
+.topo-inner{display:flex;align-items:center;gap:8px;padding:14px 0}
+.marca{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:15px;margin-right:26px}
+.marca .brasao{width:32px;height:32px;border-radius:9px;object-fit:cover}
+.nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.nav a{display:flex;align-items:center;gap:7px;color:var(--suave);font-size:14px;font-weight:500;padding:8px 12px;border-radius:9px;transition:.18s}
+.nav a:hover{color:var(--texto);background:var(--s2)}
+.nav a.ativo{color:var(--texto);background:var(--s3)}
+.nav-cta{margin-left:auto;display:flex;gap:9px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:var(--corpo);font-weight:600;font-size:14px;padding:10px 16px;border-radius:10px;transition:.18s;white-space:nowrap}
+.btn:hover{background:var(--acento-claro)}
+.btn.vazado{background:var(--s2);color:var(--texto);border:1px solid var(--linha)}
+.btn.vazado:hover{background:var(--s3);border-color:var(--linha-f)}
+.btn.perigo{background:transparent;color:var(--quente);border:1px solid rgba(255,77,109,.4)}
+.btn.perigo:hover{background:var(--quente-esc)}
+.btn:not(.vazado):not(.perigo){background:var(--acento);color:var(--acento-tx)}
+.btn.mini{padding:7px 12px;font-size:12px;border-radius:8px}
+
+/* ---------- etiqueta / selo ---------- */
+.etiqueta{display:inline-flex;align-items:center;gap:8px;background:var(--acento-esc);color:var(--acento);font-size:12px;font-weight:600;padding:7px 13px;border-radius:8px}
+.etiqueta.fria{background:var(--s2);color:var(--suave);border:1px solid var(--linha)}
+.etiqueta.viva{background:var(--quente-esc);color:var(--quente)}
+.pulso{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulsar 1.6s infinite;flex:none}
+@keyframes pulsar{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 44px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(40px,5.4vw,64px)}
+.hero h1 em{font-style:normal;color:var(--acento)}
+.hero p{color:var(--suave);font-size:16px;line-height:1.7;max-width:44ch;margin:20px 0 28px}
+.hero-acoes{display:flex;gap:10px;flex-wrap:wrap}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--linha);border:1px solid var(--linha);border-radius:var(--r);overflow:hidden;margin-top:32px}
+.stats div{background:var(--s1);padding:16px 18px}
+.stats .ic{color:var(--fraco);margin-bottom:10px;display:block}
+.stats .n{font-family:var(--display);font-weight:800;font-size:26px;display:block}
+.stats .l{font-size:12px;color:var(--fraco);margin-top:2px;display:block}
+
+/* ---------- placar ao vivo / destaque ---------- */
+.live{background:var(--s1);border:1px solid var(--linha);border-radius:18px;overflow:hidden}
+.live-top{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--linha);background:var(--s2)}
+.live-loc{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fraco)}
+.placar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:30px 20px 22px}
+.lado{text-align:center;min-width:0}
+.lado h3{font-size:15px;font-weight:600;font-family:var(--corpo);letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lado small{color:var(--fraco);font-size:12px;display:block;margin-top:3px}
+.nums{font-family:var(--display);font-weight:800;font-size:50px;letter-spacing:-.04em;display:flex;gap:10px;align-items:center}
+.nums em{font-style:normal;color:var(--linha-f);font-size:26px}
+.min{display:flex;justify-content:space-between;padding:0 20px 22px;font-size:11px;color:var(--fraco)}
+
+/* ---------- seções ---------- */
+.secao{padding:48px 0}
+.secao-topo{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;gap:20px;flex-wrap:wrap}
+.secao-topo h2{font-size:clamp(22px,3.2vw,30px);display:flex;align-items:center;gap:10px}
+.secao-topo h2 svg{width:20px;height:20px;color:var(--acento);flex:none}
+.secao-topo p{color:var(--fraco);font-size:13px;margin-top:6px}
+.secao-topo a{color:var(--acento);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;margin-left:auto}
+.secao-topo a:hover{text-decoration:underline}
+
+.grade{display:grid;gap:14px}
+.grade.jogos{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.grade.times{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.grade.elenco{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+
+/* ---------- card base ---------- */
+.card{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);padding:18px}
+
+/* ---------- jogo ---------- */
+.jogo{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);padding:18px;transition:.2s;display:block}
+.jogo:hover{background:var(--s2);border-color:var(--linha-f)}
+.jogo-topo{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--fraco);margin-bottom:16px}
+.jogo-topo .rodada{margin-left:auto}
+.linha-time{display:flex;align-items:center;gap:11px;padding:7px 0}
+.linha-time .ponto{width:24px;height:24px;border-radius:8px;flex:none}
+.linha-time .nome{font-size:15px;font-weight:500}
+.linha-time .gols{margin-left:auto;font-family:var(--display);font-weight:800;font-size:21px}
+.linha-time.perdeu{color:var(--fraco)}
+.horario{display:flex;align-items:center;gap:5px;margin-top:10px;font-family:var(--dados);font-size:12px;color:var(--fraco)}
+
+/* ---------- escudo genérico ---------- */
+.escudo{border-radius:8px;display:grid;place-items:center;font-family:var(--display);font-weight:800;color:var(--acento-tx)}
+
+/* ---------- card de time ---------- */
+.card-time{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--linha);aspect-ratio:3/3.4;display:flex;flex-direction:column;justify-content:flex-end;transition:.25s;background:var(--s2)}
+.card-time:hover{transform:translateY(-4px);border-color:var(--linha-f)}
+.card-time .veu{position:absolute;inset:0;background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,.75))}
+.card-time .barra{position:absolute;left:0;right:0;bottom:0;height:4px;z-index:1}
+.card-time .pos-badge{position:absolute;top:12px;left:12px;background:var(--bg);border:1px solid var(--linha-f);border-radius:8px;padding:4px 9px;font-family:var(--dados);font-size:11px;font-weight:700;z-index:1}
+.card-time .info{position:relative;padding:14px 16px;z-index:1}
+.card-time h3{font-size:18px;font-weight:700;margin-bottom:4px}
+.card-time .meta{display:flex;gap:12px;font-size:12px;color:var(--suave)}
+.card-time .meta span{display:flex;align-items:center;gap:4px}
+
+/* ---------- card de jogador ---------- */
+.jog{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);overflow:hidden;transition:.2s}
+.jog:hover{border-color:var(--acento);transform:translateY(-4px)}
+.jog .foto{position:relative;aspect-ratio:1/1;overflow:hidden;background:var(--s3);display:grid;place-items:center}
+.jog .num{position:absolute;right:10px;bottom:6px;font-family:var(--display);font-weight:800;font-size:40px;line-height:1;color:rgba(var(--texto-rgb),.5)}
+.jog .cor{position:absolute;left:0;top:0;bottom:0;width:4px}
+.jog .txt{padding:13px 15px 15px}
+.jog h4{font-size:16px;font-weight:600;font-family:var(--corpo);letter-spacing:0}
+.jog .pos{font-size:12px;color:var(--fraco);margin-top:3px}
+.jog .g{margin-top:11px;display:flex;gap:14px;font-family:var(--dados);font-size:12px;color:var(--suave)}
+.jog .g b{color:var(--acento);font-weight:700}
+
+/* ---------- painel de gráfico ---------- */
+.painel-grafico{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);padding:20px}
+.painel-grafico-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.painel-grafico-topo h3{font-size:16px;font-weight:700;font-family:var(--corpo);letter-spacing:0}
+.legenda{display:flex;gap:14px;font-size:12px;color:var(--suave);flex-wrap:wrap}
+.legenda span{display:flex;align-items:center;gap:6px}
+.legenda i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* ---------- tabela ---------- */
+.tabela-rolagem{background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);overflow:hidden;overflow-x:auto}
+.tabela{width:100%;border-collapse:collapse}
+.tabela th{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--fraco);font-weight:500;padding:14px 12px;text-align:right;background:var(--s2);white-space:nowrap}
+.tabela th:nth-child(-n+2),.tabela td:nth-child(-n+2){text-align:left}
+.tabela td{padding:13px 12px;text-align:right;font-family:var(--dados);font-size:14px;border-top:1px solid var(--linha);font-variant-numeric:tabular-nums}
+.tabela td.time{font-family:var(--corpo);font-weight:500}
+.tabela td.time a{display:flex;align-items:center;gap:10px}
+.tabela .pontos{font-weight:700}
+.tabela tbody tr:hover td{background:var(--s2)}
+.tabela .pos{color:var(--fraco)}
+.tabela tr.classificado td.pos{color:var(--acento);font-weight:700}
+.tabela .ponto{width:24px;height:24px;border-radius:7px;display:inline-grid;place-items:center;font-family:var(--dados);font-size:10px;font-weight:700;color:var(--acento-tx);flex:none}
+.forma{display:flex;gap:3px;justify-content:flex-end}
+.forma i{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-family:var(--corpo);font-size:9px;font-weight:700;font-style:normal}
+.forma .fv{background:var(--acento-esc);color:var(--acento)}
+.forma .fe{background:var(--s3);color:var(--suave)}
+.forma .fd{background:var(--quente-esc);color:var(--quente)}
+
+/* ---------- formulários (painel admin) ---------- */
+.form{display:grid;gap:14px}
+.campo{display:grid;gap:6px}
+.campo label{font-family:var(--dados);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fraco)}
+.campo input,.campo select,.campo textarea{padding:11px 12px;border-radius:9px;border:1px solid var(--linha);background:var(--s2);color:var(--texto);font-family:var(--corpo);font-size:15px}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--acento);outline:none}
+.linha-campos{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+
+.aviso{padding:12px 14px;border-radius:9px;font-size:14px;border:1px solid}
+.aviso.erro{border-color:rgba(255,77,109,.4);color:var(--quente);background:var(--quente-esc)}
+.aviso.ok{border-color:rgba(0,232,143,.35);color:var(--acento);background:var(--acento-esc)}
+
+/* ---------- painel admin ---------- */
+.admin{padding:32px 0 72px}
+.admin-topo{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.abas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;border-bottom:1px solid var(--linha)}
+.abas button{padding:12px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--fraco);font-family:var(--corpo);font-size:14px;font-weight:500}
+.abas button.ativa{color:var(--texto);border-bottom-color:var(--acento)}
+.painel{display:grid;gap:24px;grid-template-columns:minmax(280px,340px) 1fr;align-items:start}
+@media (max-width:860px){.painel{grid-template-columns:1fr}}
+
+.lista{display:grid;gap:8px}
+.item{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--linha);border-radius:10px;background:var(--s1)}
+.item .info{display:grid}
+.item .info strong{font-weight:600}
+.item .info small{font-family:var(--dados);font-size:11px;color:var(--fraco)}
+.item .acoes{margin-left:auto;display:flex;gap:6px}
+.acoes input{padding:7px 8px;border-radius:7px;text-align:center;border:1px solid var(--linha);background:var(--s2);color:var(--texto);font-family:var(--dados);font-size:14px}
+
+/* ---------- login ---------- */
+.login-caixa{width:min(420px,92vw);margin:56px auto 90px;text-align:center}
+.login-caixa .brasao-grande{width:88px;height:88px;border-radius:20px;margin:0 auto 24px;display:block;object-fit:cover}
+.login-caixa .card{text-align:left}
+
+.rodape{border-top:1px solid var(--linha);padding:28px 0;color:var(--fraco);font-size:13px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.vazio{padding:28px;text-align:center;color:var(--fraco);border:1px dashed var(--linha);border-radius:var(--r)}
+
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;padding-top:36px}
+  .grade.jogos,.grade.times,.grade.elenco{grid-template-columns:repeat(2,1fr)}
+  .nav a span.rotulo{display:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:600px){.grade.jogos,.grade.times,.grade.elenco{grid-template-columns:1fr}}

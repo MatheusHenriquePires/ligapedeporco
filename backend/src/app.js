@@ -1,0 +1,29 @@
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import 'dotenv/config';
+
+import rotasAuth from './routes/auth.js';
+import rotasTimes from './routes/times.js';
+import rotasJogadores from './routes/jogadores.js';
+import rotasRodadas from './routes/rodadas.js';
+import rotasPartidas from './routes/partidas.js';
+import rotasClassificacao from './routes/classificacao.js';
+
+export async function buildApp() {
+  const app = Fastify({ logger: true });
+
+  await app.register(cors, {
+    origin: process.env.CORS_ORIGIN?.split(',') ?? true,
+  });
+
+  app.get('/api/health', async () => ({ ok: true, liga: 'Liga Pé de Porco' }));
+
+  await app.register(rotasAuth, { prefix: '/api/auth' });
+  await app.register(rotasTimes, { prefix: '/api/times' });
+  await app.register(rotasJogadores, { prefix: '/api/jogadores' });
+  await app.register(rotasRodadas, { prefix: '/api/rodadas' });
+  await app.register(rotasPartidas, { prefix: '/api/partidas' });
+  await app.register(rotasClassificacao, { prefix: '/api/classificacao' });
+
+  return app;
+}

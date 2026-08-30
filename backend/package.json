@@ -1,0 +1,19 @@
+{
+  "name": "liga-do-porco-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "db:setup": "node src/scripts/setup-db.js",
+    "admin:create": "node src/scripts/create-admin.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  }
+}
