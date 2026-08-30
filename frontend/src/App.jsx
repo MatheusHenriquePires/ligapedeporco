@@ -1,5 +1,5 @@
 import { Routes, Route, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Home as IconeInicio, Shield, CalendarDays, ListOrdered, LogIn, LogOut, Settings } from 'lucide-react';
+import { Home as IconeInicio, Shield, CalendarDays, ListOrdered, LogOut, Settings } from 'lucide-react';
 import Home from './pages/Home.jsx';
 import Times from './pages/Times.jsx';
 import TimeDetalhe from './pages/TimeDetalhe.jsx';
@@ -32,14 +32,12 @@ function Topo() {
           <NavLink to="/rodadas" className={link}><CalendarDays className="i" /><span className="rotulo">Rodadas</span></NavLink>
           <NavLink to="/classificacao" className={link}><ListOrdered className="i" /><span className="rotulo">Classificação</span></NavLink>
         </nav>
-        <div className="nav-cta">
-          {logado ? (
-            <button className="btn vazado" onClick={sair}><LogOut className="i" />Sair</button>
-          ) : (
-            <NavLink to="/login" className="btn vazado"><LogIn className="i" />Entrar</NavLink>
-          )}
-          <NavLink to="/admin" className="btn"><Settings className="i" />Painel</NavLink>
-        </div>
+        {logado && (
+          <div className="nav-cta">
+            <NavLink to="/admin" className="btn vazado"><Settings className="i" />Painel</NavLink>
+            <button className="btn" onClick={sair}><LogOut className="i" />Sair</button>
+          </div>
+        )}
       </div>
     </header>
   );
