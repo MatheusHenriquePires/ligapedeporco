@@ -1,10 +1,11 @@
 import { Routes, Route, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Home as IconeInicio, Shield, CalendarDays, ListOrdered, LogOut, Settings } from 'lucide-react';
+import { Home as IconeInicio, Shield, CalendarDays, ListOrdered, LogOut, Settings, Handshake } from 'lucide-react';
 import Home from './pages/Home.jsx';
 import Times from './pages/Times.jsx';
 import TimeDetalhe from './pages/TimeDetalhe.jsx';
 import Rodadas from './pages/Rodadas.jsx';
 import Classificacao from './pages/Classificacao.jsx';
+import Patrocinadores from './pages/Patrocinadores.jsx';
 import Login from './pages/Login.jsx';
 import Admin from './pages/Admin.jsx';
 import { getToken, limparSessao } from './api.js';
@@ -31,6 +32,7 @@ function Topo() {
           <NavLink to="/times" className={link}><Shield className="i" /><span className="rotulo">Times</span></NavLink>
           <NavLink to="/rodadas" className={link}><CalendarDays className="i" /><span className="rotulo">Rodadas</span></NavLink>
           <NavLink to="/classificacao" className={link}><ListOrdered className="i" /><span className="rotulo">Classificação</span></NavLink>
+          <NavLink to="/patrocinadores" className={link}><Handshake className="i" /><span className="rotulo">Patrocinadores</span></NavLink>
         </nav>
         {logado && (
           <div className="nav-cta">
@@ -60,6 +62,7 @@ export default function App() {
           <Route path="/times/:slug" element={<TimeDetalhe />} />
           <Route path="/rodadas" element={<Rodadas />} />
           <Route path="/classificacao" element={<Classificacao />} />
+          <Route path="/patrocinadores" element={<Patrocinadores />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin" element={<SomenteAdmin><Admin /></SomenteAdmin>} />
           <Route path="*" element={<div className="container secao"><h2>Página não encontrada</h2></div>} />

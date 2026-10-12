@@ -13,6 +13,8 @@ import Escudo from '../components/Escudo.jsx';
 import CardJogo from '../components/CardJogo.jsx';
 import FotoPlaceholder from '../components/FotoPlaceholder.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
+import Patrocinador from '../components/Patrocinador.jsx';
+import { PATROCINADORES } from '../patrocinadores.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -317,11 +319,9 @@ export default function Home() {
       </section>
 
       <section className="secao patrocinadores">
-        <div className="secao-topo"><div><h2 style={{ fontSize: 15 }}>Apoio</h2><p>Marcas que apoiam a liga</p></div></div>
+        <div className="secao-topo"><div><h2 style={{ fontSize: 15 }}>Apoio</h2><p>Marcas que apoiam a liga</p></div><Link to="/patrocinadores" className="ver-mais">Ver todos<ArrowRight className="i" /></Link></div>
         <div className="patrocinadores-fita">
-          {[1, 2, 3, 4, 5, 6].map((n) => (
-            <div key={n} className="patrocinador-slot">Patrocinador {n}</div>
-          ))}
+          {PATROCINADORES.map((p) => <Patrocinador key={p.nome} p={p} />)}
         </div>
       </section>
       </div>

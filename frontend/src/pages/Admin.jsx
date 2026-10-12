@@ -24,6 +24,27 @@ const vazioPartida = { rodada_id: '', time_casa_id: '', time_fora_id: '', horari
 const normalizar = (texto) => (texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const contem = (texto, busca) => normalizar(texto).includes(normalizar(busca));
 
+/** Turno único (todo mundo contra todo mundo uma vez) pelo método do polígono. */
+function gerarRoundRobin(times) {
+  const lista = [...times];
+  if (lista.length % 2 !== 0) lista.push(null); // time fictício = alguém fica de fora na rodada
+  const n = lista.length;
+  const rodadas = [];
+  let atual = lista;
+
+  for (let r = 0; r < n - 1; r++) {
+    const confrontos = [];
+    for (let i = 0; i < n / 2; i++) {
+      const a = atual[i];
+      const b = atual[n - 1 - i];
+      if (a && b) confrontos.push(r % 2 === 0 ? { casa: a, fora: b } : { casa: b, fora: a });
+    }
+    rodadas.push(confrontos);
+    atual = [atual[0], atual[n - 1], ...atual.slice(1, n - 1)];
+  }
+  return rodadas;
+}
+
 export default function Admin() {
   const navegar = useNavigate();
   const admin = adminSalvo();
@@ -61,7 +82,7 @@ export default function Admin() {
     <div className="container admin">
       <div className="admin-topo">
         <span className="etiqueta">Painel administrativo</span>
-        <h2 style={{ fontSize: 30 }}>Central de controle</h2>
+        <h2 className="admin-titulo">Central de controle</h2>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--dados)', fontSize: 12, color: 'rgba(var(--texto-rgb), 0.55)' }}>
             {admin?.nome ?? 'admin'}
@@ -399,13 +420,38 @@ function PainelJogadores({ times, jogadores, recarregar, avisar }) {
 }
 
 /* -------------------------------- Rodadas -------------------------------- */
-function PainelRodadas({ rodadas, recarregar, avisar }) {
+function PainelRodadas({ times, rodadas, recarregar, avisar }) {
   const [form, setForm] = useState(vazioRodada);
   const [editandoId, setEditandoId] = useState(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [busca, setBusca] = useState('');
   const [remover, setRemover] = useState(null);
   const [removendo, setRemovendo] = useState(false);
+  const [previa, setPrevia] = useState(null);
+  const [gerando, setGerando] = useState(false);
+
+  const rodadasLiga = rodadas.filter((r) => r.fase === 'LIGA');
+  const outraFase = rodadas.some((r) => r.fase !== 'LIGA');
+
+  function abrirPrevia() {
+    if (times.length < 2) { avisar('Cadastre pelo menos 2 times antes de gerar a temporada.', 'erro'); return; }
+    setPrevia(gerarRoundRobin(times));
+  }
+
+  async function confirmarGeracao() {
+    setGerando(true);
+    try {
+      await api('/rodadas/liga-automatica', {
+        method: 'POST',
+        auth: true,
+        body: { rodadas: previa.map((confrontos) => ({ confrontos: confrontos.map((c) => ({ time_casa_id: c.casa.id, time_fora_id: c.fora.id })) })) },
+      });
+      avisar('Temporada gerada automaticamente!');
+      setPrevia(null);
+      recarregar();
+    } catch (erro) { avisar(erro.message, 'erro'); }
+    setGerando(false);
+  }
 
   const mudar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value });
 
@@ -443,12 +489,24 @@ function PainelRodadas({ rodadas, recarregar, avisar }) {
 
   return (
     <div>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3 style={{ marginBottom: 6 }}>Gerar temporada automaticamente</h3>
+        <p style={{ color: 'var(--fraco)', fontSize: 13, marginBottom: 14 }}>
+          Monta o turno único inteiro sozinho — todo time contra todo time uma vez, rodadas e jogos já criados juntos.
+          {rodadasLiga.length > 0 && ' Isso substitui as rodadas de liga atuais e os placares já lançados nelas.'}
+        </p>
+        <button type="button" className="btn" disabled={outraFase} onClick={abrirPrevia}>
+          <Shuffle className="i" />Gerar rodadas
+        </button>
+        {outraFase && <p style={{ color: 'var(--fraco)', fontSize: 12, marginTop: 8 }}>Remova a semifinal/final antes de regerar a liga.</p>}
+      </div>
+
       <div className="admin-lista-topo">
         <div className="campo" style={{ position: 'relative' }}>
           <input placeholder="Buscar rodada…" value={busca} onChange={(e) => setBusca(e.target.value)} style={{ paddingLeft: 34 }} />
           <Search className="i" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fraco)' }} />
         </div>
-        <button className="btn" onClick={abrirNovo}><Plus className="i" />Nova rodada</button>
+        <button className="btn vazado" onClick={abrirNovo}><Plus className="i" />Nova rodada avulsa</button>
       </div>
 
       <div className="lista">
@@ -498,6 +556,36 @@ function PainelRodadas({ rodadas, recarregar, avisar }) {
         onConfirmar={confirmarRemocao}
         confirmando={removendo}
       />
+
+      <Modal aberto={!!previa} titulo="Revisar temporada gerada" onFechar={() => setPrevia(null)} largura={640}>
+        {previa && (
+          <div>
+            {rodadasLiga.length > 0 && (
+              <p className="aviso erro" style={{ marginBottom: 14 }}>
+                Isso vai apagar as {rodadasLiga.length} rodadas de liga atuais (e placares já lançados) e substituir pelo que está abaixo.
+              </p>
+            )}
+            <div style={{ display: 'grid', gap: 10, maxHeight: 380, overflowY: 'auto' }}>
+              {previa.map((confrontos, i) => (
+                <div key={i} className="item" style={{ display: 'block' }}>
+                  <strong style={{ fontSize: 13 }}>Rodada {i + 1}</strong>
+                  <div style={{ marginTop: 6, display: 'grid', gap: 4 }}>
+                    {confrontos.map((c, j) => (
+                      <small key={j} style={{ color: 'var(--suave)' }}>{c.casa.nome} × {c.fora.nome}</small>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button className="btn" disabled={gerando} onClick={confirmarGeracao}>
+                {gerando ? 'Gerando…' : 'Confirmar e gerar'}
+              </button>
+              <button type="button" className="btn vazado" onClick={() => setPrevia(null)}>Cancelar</button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

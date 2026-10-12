@@ -2,7 +2,10 @@
   "name": "liga-pe-de-porco",
   "private": true,
   "type": "module",
+  "engines": { "node": ">=20" },
   "scripts": {
+    "postinstall": "npm install --omit=dev --prefix backend",
+    "start": "npm start --prefix backend",
     "deploy": "npm run build --prefix frontend && node scripts/build-vercel.js && npx vercel deploy --prebuilt --prod"
   }
 }

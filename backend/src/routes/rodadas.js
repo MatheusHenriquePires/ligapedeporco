@@ -1,4 +1,4 @@
-import { query, one } from '../db.js';
+import { query, one, pool } from '../db.js';
 import { exigirAdmin } from '../auth.js';
 
 async function partidasDaRodada(rodadaId) {
@@ -100,5 +100,64 @@ export default async function rotasRodadas(app) {
 
     rodada.partidas = await partidasDaRodada(rodada.id);
     return rodada;
+  });
+
+  /**
+   * Gera a temporada de liga inteira de uma vez (turno único, todo mundo contra
+   * todo mundo), a partir dos confrontos já calculados no front. Substitui
+   * completamente as rodadas de fase LIGA existentes.
+   */
+  app.post('/liga-automatica', { preHandler: exigirAdmin }, async (request, reply) => {
+    const { rodadas: rodadasNovas } = request.body ?? {};
+    if (!Array.isArray(rodadasNovas) || rodadasNovas.length === 0) {
+      return reply.code(400).send({ erro: 'Nada pra gerar — confira os times cadastrados.' });
+    }
+
+    const outraFase = await one("SELECT id FROM rodadas WHERE fase <> 'LIGA'");
+    if (outraFase) {
+      return reply.code(400).send({ erro: 'Remova a semifinal/final antes de regerar a fase de liga.' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("DELETE FROM rodadas WHERE fase = 'LIGA'");
+
+      for (let i = 0; i < rodadasNovas.length; i++) {
+        const confrontos = rodadasNovas[i]?.confrontos ?? [];
+        if (!confrontos.length) continue;
+
+        const { rows: [rodada] } = await client.query(
+          `INSERT INTO rodadas (numero, status, fase) VALUES ($1,'AGENDADA','LIGA') RETURNING id`,
+          [i + 1]
+        );
+        for (const c of confrontos) {
+          if (!c.time_casa_id || !c.time_fora_id) {
+            throw Object.assign(new Error('Confronto inválido na rodada ' + (i + 1) + '.'), { statusCode: 400 });
+          }
+          await client.query(
+            `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, status) VALUES ($1,$2,$3,'AGENDADA')`,
+            [rodada.id, c.time_casa_id, c.time_fora_id]
+          );
+        }
+      }
+
+      await client.query('COMMIT');
+    } catch (erro) {
+      await client.query('ROLLBACK');
+      throw erro;
+    } finally {
+      client.release();
+    }
+
+    const rodadas = await query("SELECT * FROM rodadas WHERE fase = 'LIGA' ORDER BY numero");
+    const partidas = await query(
+      `SELECT p.*, c.nome AS casa_nome, f.nome AS fora_nome
+       FROM partidas p JOIN times c ON c.id = p.time_casa_id JOIN times f ON f.id = p.time_fora_id
+       WHERE p.rodada_id = ANY($1::int[])`,
+      [rodadas.map((r) => r.id)]
+    );
+    for (const rodada of rodadas) rodada.partidas = partidas.filter((p) => p.rodada_id === rodada.id);
+    return rodadas;
   });
 }
