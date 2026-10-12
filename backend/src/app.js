@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import { existsSync } from 'node:fs';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'node:url';
 
@@ -38,6 +40,18 @@ export async function buildApp() {
   await app.register(rotasRodadas, { prefix: '/api/rodadas' });
   await app.register(rotasPartidas, { prefix: '/api/partidas' });
   await app.register(rotasClassificacao, { prefix: '/api/classificacao' });
+
+  // Em produção (Railway) a API também serve o frontend compilado.
+  const dist = fileURLToPath(new URL('../../frontend/dist/', import.meta.url));
+  if (!process.env.VERCEL && existsSync(dist)) {
+    await app.register(fastifyStatic, { root: dist });
+    app.setNotFoundHandler((request, reply) => {
+      if (request.method !== 'GET' || request.url.startsWith('/api/')) {
+        return reply.code(404).send({ erro: 'Rota não encontrada.' });
+      }
+      return reply.sendFile('index.html');
+    });
+  }
 
   return app;
 }
