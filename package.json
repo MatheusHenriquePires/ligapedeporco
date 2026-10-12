@@ -4,8 +4,8 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
-    "postinstall": "npm install --omit=dev --prefix backend",
-    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "postinstall": "npm install --omit=dev --prefix backend && npm run build",
+    "build": "npm install --include=dev --prefix frontend && npm run build --prefix frontend",
     "start": "npm start --prefix backend",
     "deploy": "npm run build --prefix frontend && node scripts/build-vercel.js && npx vercel deploy --prebuilt --prod"
   }
