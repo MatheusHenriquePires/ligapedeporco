@@ -15,10 +15,13 @@ import rotasTimes from './routes/times.js';
 import rotasJogadores from './routes/jogadores.js';
 import rotasRodadas from './routes/rodadas.js';
 import rotasPartidas from './routes/partidas.js';
+import rotasPatrocinadores from './routes/patrocinadores.js';
+import { garantirTabelas } from './db.js';
 import rotasClassificacao from './routes/classificacao.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
+  await garantirTabelas();
 
   await app.register(cors, {
     origin: process.env.CORS_ORIGIN?.split(',') ?? true,
@@ -39,6 +42,7 @@ export async function buildApp() {
   await app.register(rotasJogadores, { prefix: '/api/jogadores' });
   await app.register(rotasRodadas, { prefix: '/api/rodadas' });
   await app.register(rotasPartidas, { prefix: '/api/partidas' });
+  await app.register(rotasPatrocinadores, { prefix: '/api/patrocinadores' });
   await app.register(rotasClassificacao, { prefix: '/api/classificacao' });
 
   // Em produção (Railway) a API também serve o frontend compilado.

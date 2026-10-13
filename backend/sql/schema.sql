@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS partidas CASCADE;
 DROP TABLE IF EXISTS jogadores CASCADE;
 DROP TABLE IF EXISTS rodadas CASCADE;
 DROP TABLE IF EXISTS times CASCADE;
+DROP TABLE IF EXISTS patrocinadores CASCADE;
 DROP TABLE IF EXISTS admins CASCADE;
 
 CREATE TABLE admins (
@@ -111,3 +112,12 @@ SELECT
 FROM times t
 LEFT JOIN resultados r ON r.time_id = t.id
 GROUP BY t.id;
+
+CREATE TABLE IF NOT EXISTS patrocinadores (
+  id            SERIAL PRIMARY KEY,
+  nome          TEXT NOT NULL,
+  instagram     TEXT,
+  logo_url      TEXT,
+  ordem         INTEGER NOT NULL DEFAULT 0,
+  criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
+);

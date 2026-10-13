@@ -14,7 +14,10 @@ const ABAS = [
   { id: 'rodadas', rotulo: 'Rodadas' },
   { id: 'partidas', rotulo: 'Partidas e placares' },
   { id: 'mata-mata', rotulo: 'Mata-mata' },
+  { id: 'patrocinadores', rotulo: 'Patrocinadores' },
 ];
+
+const vazioPatrocinador = { nome: '', instagram: '', logo_url: '', ordem: 0 };
 
 const vazioTime = { nome: '', apelido: '', presidente: '', tecnico: '', cor: '#6E7BFF', escudo_url: '', descricao: '' };
 const vazioJogador = { time_id: '', nome: '', apelido: '', posicao: 'LINHA', numero: '', idade: '', foto_url: '', gols: 0, assistencias: 0, cartoes: 0, destaque: false };
@@ -106,6 +109,139 @@ export default function Admin() {
       {aba === 'rodadas' && <PainelRodadas {...props} />}
       {aba === 'partidas' && <PainelPartidas {...props} />}
       {aba === 'mata-mata' && <PainelMataMata {...props} />}
+      {aba === 'patrocinadores' && <PainelPatrocinadores {...props} />}
+    </div>
+  );
+}
+
+/* ------------------------------ Patrocinadores ------------------------------ */
+function PainelPatrocinadores({ avisar }) {
+  const [lista, setLista] = useState([]);
+  const [form, setForm] = useState(vazioPatrocinador);
+  const [editandoId, setEditandoId] = useState(null);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [arquivo, setArquivo] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const [remover, setRemover] = useState(null);
+  const [removendo, setRemovendo] = useState(false);
+
+  const carregar = useCallback(() => {
+    api('/patrocinadores').then(setLista).catch((e) => avisar(e.message, 'erro'));
+  }, []);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const mudar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value });
+
+  function abrirNovo() { setForm(vazioPatrocinador); setEditandoId(null); setArquivo(null); setModalAberto(true); }
+  function abrirEdicao(p) { setEditandoId(p.id); setForm({ ...vazioPatrocinador, ...p }); setArquivo(null); setModalAberto(true); }
+
+  async function salvar(e) {
+    e.preventDefault();
+    setSalvando(true);
+    try {
+      const corpo = { ...form, ordem: form.ordem === '' ? null : Number(form.ordem) };
+      const item = editandoId
+        ? await api(`/patrocinadores/${editandoId}`, { method: 'PUT', body: corpo, auth: true })
+        : await api('/patrocinadores', { method: 'POST', body: corpo, auth: true });
+
+      if (arquivo) {
+        try {
+          await apiUpload(`/patrocinadores/${item.id}/logo`, arquivo);
+        } catch (erroImg) {
+          avisar(`Patrocinador salvo, mas o envio da logo falhou: ${erroImg.message}`, 'erro');
+          setModalAberto(false);
+          carregar();
+          setSalvando(false);
+          return;
+        }
+      }
+      avisar(editandoId ? 'Patrocinador atualizado.' : 'Patrocinador adicionado.');
+      setModalAberto(false);
+      carregar();
+    } catch (erro) { avisar(erro.message, 'erro'); }
+    setSalvando(false);
+  }
+
+  async function removerLogoAtual() {
+    if (!editandoId) return;
+    try {
+      await api(`/patrocinadores/${editandoId}/logo`, { method: 'DELETE', auth: true });
+      setForm((f) => ({ ...f, logo_url: '' }));
+      avisar('Logo removida.');
+      carregar();
+    } catch (erro) { avisar(erro.message, 'erro'); }
+  }
+
+  async function confirmarRemocao() {
+    setRemovendo(true);
+    try {
+      await api(`/patrocinadores/${remover.id}`, { method: 'DELETE', auth: true });
+      avisar('Patrocinador removido.'); carregar();
+    } catch (erro) { avisar(erro.message, 'erro'); }
+    setRemovendo(false);
+    setRemover(null);
+  }
+
+  return (
+    <div>
+      <div className="admin-lista-topo">
+        <span />
+        <button className="btn" onClick={abrirNovo}><Plus className="i" />Novo patrocinador</button>
+      </div>
+
+      <div className="lista">
+        {lista.map((p) => (
+          <div key={p.id} className="item">
+            <Escudo time={{ nome: p.nome, cor: '#6E7BFF', escudo_url: p.logo_url }} tamanho={40} />
+            <div className="info">
+              <strong>{p.nome}</strong>
+              <small>{p.instagram ? `Instagram: ${p.instagram}` : 'sem Instagram'}</small>
+            </div>
+            <div className="acoes">
+              <button className="btn vazado mini" onClick={() => abrirEdicao(p)}>Editar</button>
+              <button className="btn perigo mini" onClick={() => setRemover(p)}>Remover</button>
+            </div>
+          </div>
+        ))}
+        {lista.length === 0 && <p className="vazio">Cadastre o primeiro patrocinador.</p>}
+      </div>
+
+      <Modal aberto={modalAberto} titulo={editandoId ? 'Editar patrocinador' : 'Novo patrocinador'} onFechar={() => setModalAberto(false)}>
+        <form className="form" onSubmit={salvar}>
+          <div className="campo"><label>Nome</label><input value={form.nome} onChange={mudar('nome')} required /></div>
+          <div className="campo">
+            <label>Instagram</label>
+            <input value={form.instagram ?? ''} onChange={mudar('instagram')} placeholder="@perfil ou https://instagram.com/perfil" />
+          </div>
+          <div className="campo"><label>Ordem de exibição</label><input type="number" value={form.ordem ?? 0} onChange={mudar('ordem')} /></div>
+          <CampoImagem
+            label="Logo"
+            urlAtual={form.logo_url}
+            onMudarUrl={(v) => setForm({ ...form, logo_url: v })}
+            nomePreview={form.nome}
+            arquivo={arquivo}
+            onEscolherArquivo={setArquivo}
+            onErro={(msg) => avisar(msg, 'erro')}
+          />
+          {editandoId && form.logo_url && !arquivo && (
+            <button type="button" className="btn perigo mini" style={{ justifySelf: 'start' }} onClick={removerLogoAtual}>
+              <ImageOff className="i" />Remover logo atual
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" disabled={salvando}>{salvando ? 'Salvando…' : editandoId ? 'Salvar alterações' : 'Adicionar'}</button>
+            <button type="button" className="btn vazado" onClick={() => setModalAberto(false)}>Cancelar</button>
+          </div>
+        </form>
+      </Modal>
+
+      <ModalConfirmar
+        aberto={!!remover}
+        mensagem={`Remover ${remover?.nome}?`}
+        onCancelar={() => setRemover(null)}
+        onConfirmar={confirmarRemocao}
+        confirmando={removendo}
+      />
     </div>
   );
 }

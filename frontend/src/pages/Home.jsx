@@ -14,7 +14,6 @@ import CardJogo from '../components/CardJogo.jsx';
 import FotoPlaceholder from '../components/FotoPlaceholder.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
 import Patrocinador from '../components/Patrocinador.jsx';
-import { PATROCINADORES } from '../patrocinadores.js';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -67,6 +66,7 @@ export default function Home() {
   const [tabela, setTabela] = useState([]);
   const [artilharia, setArtilharia] = useState([]);
   const [rodadas, setRodadas] = useState([]);
+  const [patrocinadores, setPatrocinadores] = useState([]);
 
   useEffect(() => {
     api('/times').then(setTimes).catch(() => {});
@@ -75,6 +75,7 @@ export default function Home() {
     api('/classificacao').then(setTabela).catch(() => {});
     api('/jogadores/artilharia').then(setArtilharia).catch(() => {});
     api('/rodadas').then(setRodadas).catch(() => {});
+    api('/patrocinadores').then(setPatrocinadores).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -318,12 +319,14 @@ export default function Home() {
         {tabela.length === 0 && <p className="vazio">A tabela aparece assim que o primeiro placar for lançado.</p>}
       </section>
 
-      <section className="secao patrocinadores">
-        <div className="secao-topo"><div><h2 style={{ fontSize: 15 }}>Apoio</h2><p>Marcas que apoiam a liga</p></div><Link to="/patrocinadores" className="ver-mais">Ver todos<ArrowRight className="i" /></Link></div>
-        <div className="patrocinadores-fita">
-          {PATROCINADORES.map((p) => <Patrocinador key={p.nome} p={p} />)}
-        </div>
-      </section>
+      {patrocinadores.length > 0 && (
+        <section className="secao patrocinadores">
+          <div className="secao-topo"><div><h2 style={{ fontSize: 15 }}>Apoio</h2><p>Marcas que apoiam a liga</p></div><Link to="/patrocinadores" className="ver-mais">Ver todos<ArrowRight className="i" /></Link></div>
+          <div className="patrocinadores-fita">
+            {patrocinadores.map((p) => <Patrocinador key={p.id} p={p} />)}
+          </div>
+        </section>
+      )}
       </div>
     </div>
   );
