@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, Star, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Users, CalendarDays } from 'lucide-react';
 import { api } from '../api.js';
 import Escudo from '../components/Escudo.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
 
 const NOMES_POSICAO = { GOLEIRO: 'Goleiro', LINHA: 'Linha', ALA: 'Ala', FIXO: 'Fixo', PIVO: 'Pivô' };
+const SIGLA_POSICAO = { GOLEIRO: 'GOL', LINHA: 'LIN', ALA: 'ALA', FIXO: 'FIX', PIVO: 'PIV' };
 const ORDEM_POSICAO = { GOLEIRO: 0, FIXO: 1, ALA: 2, LINHA: 3, PIVO: 4 };
 
 const sigla = (nome) => (nome ?? '?').normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -139,11 +140,11 @@ export default function TimeDetalhe() {
                   <div className="tm-jogador-topo">
                     <div>
                       <strong>{j.apelido || j.nome}</strong>
-                      <span>{j.apelido ? j.nome : NOMES_POSICAO[j.posicao] ?? j.posicao}</span>
+                      <span>{NOMES_POSICAO[j.posicao] ?? j.posicao}</span>
                     </div>
                     <span className="tm-media" title={NOMES_POSICAO[j.posicao]}>
-                      {artilheiros.has(j.id) ? <Star className="i" /> : null}
-                      {NOMES_POSICAO[j.posicao] ?? j.posicao}
+                      <small>{artilheiros.has(j.id) ? '★ Time' : 'Pos.'}</small>
+                      {SIGLA_POSICAO[j.posicao] ?? j.posicao}
                     </span>
                   </div>
                   <div className="tm-stats">

@@ -407,3 +407,20 @@ a.patrocinador-slot{cursor:pointer;text-decoration:none}
   .tm-resumo-grade{grid-template-columns:repeat(4,1fr);row-gap:16px}
   .tm-historico{grid-template-columns:repeat(2,1fr)}
 }
+
+/* cartão de jogador: aproximado do painel de referência */
+.tm-jogador{position:relative;border:none;border-radius:8px;background:#121212;min-height:176px}
+.tm-jogador::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,var(--cor-time) 0 7px,transparent 7px),
+             linear-gradient(295deg,color-mix(in srgb,var(--cor-time) 55%,transparent) 0 11%,transparent 11%)}
+.tm-jogador-foto{width:112px;margin:8px 0 8px 14px;background:none;border-radius:4px;overflow:hidden;
+  background:#1d1d1d url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='xMidYMax slice'><path fill='%23050505' d='M50 12c-13 0-22 11-22 26 0 10 4 18 10 23-14 5-30 12-30 34v45h84v-45c0-22-16-29-30-34 6-5 10-13 10-23 0-15-9-26-22-26z'/></svg>") center bottom/cover no-repeat}
+.tm-jogador-foto .foto-jogador{width:100%;height:100%;min-height:158px;background:none}
+.tm-jogador-foto .foto-jogador-marcador{display:none}
+.tm-jogador-foto img{object-fit:cover}
+.tm-numero{background:rgba(0,0,0,.55);padding:1px 6px;border-radius:4px}
+.tm-jogador-info{position:relative;padding:12px 14px 12px 12px}
+.tm-media{display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:50px;border-radius:5px;padding:0;font-size:15px;gap:2px}
+.tm-media small{font-size:9px;font-weight:600}
+.tm-stats div{background:#1c1c1c;border-radius:6px;padding:9px 4px}
+.tm-stats small{font-size:10px;margin-bottom:4px}
