@@ -2,7 +2,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
+import { PASTA_UPLOADS } from './storage.js';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'node:url';
 
@@ -45,10 +46,15 @@ export async function buildApp() {
   await app.register(rotasPatrocinadores, { prefix: '/api/patrocinadores' });
   await app.register(rotasClassificacao, { prefix: '/api/classificacao' });
 
+  if (!process.env.VERCEL) {
+    mkdirSync(PASTA_UPLOADS, { recursive: true });
+    await app.register(fastifyStatic, { root: PASTA_UPLOADS, prefix: '/uploads/', decorateReply: false });
+  }
+
   // Em produção (Railway) a API também serve o frontend compilado.
   const dist = fileURLToPath(new URL('../../frontend/dist/', import.meta.url));
   if (!process.env.VERCEL && existsSync(dist)) {
-    await app.register(fastifyStatic, { root: dist });
+    await app.register(fastifyStatic, { root: dist, wildcard: false });
     app.setNotFoundHandler((request, reply) => {
       if (request.method !== 'GET' || request.url.startsWith('/api/')) {
         return reply.code(404).send({ erro: 'Rota não encontrada.' });
