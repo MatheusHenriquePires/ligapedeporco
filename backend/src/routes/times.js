@@ -80,7 +80,9 @@ export default async function rotasTimes(app) {
     });
 
     const caminhoAntigo = caminhoDaUrlPublica(time.escudo_url);
-    if (caminhoAntigo) await removerImagem(caminhoAntigo).catch(() => {});
+    if (caminhoAntigo && caminhoAntigo !== caminhoDaUrlPublica(urlPublica)) {
+      await removerImagem(caminhoAntigo).catch(() => {});
+    }
 
     const atualizado = await one(
       'UPDATE times SET escudo_url = $2 WHERE id = $1 RETURNING *',

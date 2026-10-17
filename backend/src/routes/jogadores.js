@@ -70,7 +70,9 @@ export default async function rotasJogadores(app) {
     });
 
     const caminhoAntigo = caminhoDaUrlPublica(jogador.foto_url);
-    if (caminhoAntigo) await removerImagem(caminhoAntigo).catch(() => {});
+    if (caminhoAntigo && caminhoAntigo !== caminhoDaUrlPublica(urlPublica)) {
+      await removerImagem(caminhoAntigo).catch(() => {});
+    }
 
     const atualizado = await one(
       'UPDATE jogadores SET foto_url = $2 WHERE id = $1 RETURNING *',
