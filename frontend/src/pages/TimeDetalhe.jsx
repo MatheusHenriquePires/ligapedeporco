@@ -1,11 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, Star, ShieldCheck, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Users, Star, CalendarDays } from 'lucide-react';
 import { api } from '../api.js';
 import Escudo from '../components/Escudo.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
 
-const NOMES_POSICAO = { GOLEIRO: 'Goleiro', LINHA: 'Jogador de linha', ALA: 'Ala', FIXO: 'Fixo', PIVO: 'Pivô' };
+const NOMES_POSICAO = { GOLEIRO: 'Goleiro', LINHA: 'Linha', ALA: 'Ala', FIXO: 'Fixo', PIVO: 'Pivô' };
+const ORDEM_POSICAO = { GOLEIRO: 0, FIXO: 1, ALA: 2, LINHA: 3, PIVO: 4 };
+
+const sigla = (nome) => (nome ?? '?').normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .split(/\s+/).filter(Boolean).map((p) => p[0]).join('').slice(0, 3).toUpperCase();
+
+function dataLonga(iso) {
+  if (!iso) return 'Data a definir';
+  const d = new Date(iso).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  return d.charAt(0).toUpperCase() + d.slice(1);
+}
+const horaCurta = (iso) => (iso
+  ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -')
+  : '--');
 
 function artilheirosDoTime(elenco) {
   const max = Math.max(0, ...elenco.map((j) => j.gols ?? 0));
@@ -13,150 +26,162 @@ function artilheirosDoTime(elenco) {
   return new Set(elenco.filter((j) => (j.gols ?? 0) === max).map((j) => j.id));
 }
 
-function cleanSheetsDoTime(time) {
-  return time.partidas.filter((p) => {
-    if (p.status !== 'ENCERRADA') return false;
-    if (p.time_casa_id === time.id) return p.gols_fora === 0;
-    if (p.time_fora_id === time.id) return p.gols_casa === 0;
-    return false;
-  }).length;
-}
-
-function Contador({ valor }) {
-  const [n, setN] = useState(0);
-  const [pronto, setPronto] = useState(false);
-  useEffect(() => {
-    setPronto(false);
-    let atual = 0;
-    const passo = Math.max(1, Math.round(valor / 16));
-    const t = setInterval(() => {
-      atual += passo;
-      if (atual >= valor) {
-        atual = valor;
-        clearInterval(t);
-        setPronto(true);
-      }
-      setN(atual);
-    }, 22);
-    return () => clearInterval(t);
-  }, [valor]);
-  return <span className={`n${pronto ? ' contagem-pronta' : ''}`}>{n}</span>;
-}
-
 export default function TimeDetalhe() {
   const { slug } = useParams();
   const [time, setTime] = useState(null);
+  const [linha, setLinha] = useState(null);
+  const [posicao, setPosicao] = useState(0);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
-    api(`/times/${slug}`).then(setTime).catch((e) => setErro(e.message));
+    setTime(null);
+    api(`/times/${slug}`).then(async (t) => {
+      setTime(t);
+      const tabela = await api('/classificacao').catch(() => []);
+      const i = tabela.findIndex((x) => x.time_id === t.id);
+      setLinha(i >= 0 ? tabela[i] : null);
+      setPosicao(i + 1);
+    }).catch((e) => setErro(e.message));
   }, [slug]);
 
   if (erro) return <div className="container secao"><p className="aviso erro">{erro}</p></div>;
-  if (!time) return <div className="container secao"><p className="vazio">Carregando elenco…</p></div>;
+  if (!time) return <div className="container secao"><p className="vazio">Carregando time…</p></div>;
 
-  return (
-    <>
-      <section className="container secao" style={{ borderTop: 'none' }}>
-        <Link to="/times" className="etiqueta fria"><ArrowLeft className="i" />Todos os times</Link>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginTop: 24, flexWrap: 'wrap' }}>
-          <Escudo time={time} tamanho={88} />
-          <div>
-            <h1 style={{ fontSize: 'clamp(38px, 7vw, 72px)', lineHeight: 0.95 }}>{time.nome}</h1>
-            <div style={{ fontFamily: 'var(--dados)', fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--texto-rgb), 0.6)', marginTop: 8 }}>
-              {[time.apelido, time.presidente && `Presidência: ${time.presidente}`, time.tecnico && `Técnico: ${time.tecnico}`]
-                .filter(Boolean).join(' · ')}
-            </div>
-          </div>
-        </div>
-        {time.descricao && <p style={{ maxWidth: '60ch', marginTop: 20, color: 'rgba(var(--texto-rgb), 0.7)' }}>{time.descricao}</p>}
-      </section>
-
-      <section className="container secao">
-        <div className="secao-topo"><h2><Users />Elenco</h2><span className="etiqueta fria">{time.elenco.length} jogadores</span></div>
-        {time.elenco.length > 0
-          ? <ElencoInterativo time={time} />
-          : <p className="vazio">Elenco ainda não cadastrado.</p>}
-      </section>
-
-      <section className="container secao">
-        <div className="secao-topo"><h2>Jogos</h2></div>
-        <div className="tabela-rolagem">
-          <table className="tabela">
-            <thead><tr><th>Rodada</th><th>Confronto</th><th>Placar</th><th>Situação</th></tr></thead>
-            <tbody>
-              {time.partidas.map((p) => (
-                <tr key={p.id}>
-                  <td className="pos">{p.rodada}</td>
-                  <td className="time">{p.casa} × {p.fora}</td>
-                  <td className="pontos">{p.status === 'AGENDADA' ? '–' : `${p.gols_casa} × ${p.gols_fora}`}</td>
-                  <td>{p.status.replace('_', ' ').toLowerCase()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </>
-  );
-}
-
-/* ------------------------------- Elenco ---------------------------------- */
-function ElencoInterativo({ time }) {
-  const [selecionadoId, setSelecionadoId] = useState(time.elenco[0]?.id);
-  const selecionado = time.elenco.find((j) => j.id === selecionadoId) ?? time.elenco[0];
+  const proximos = time.partidas.filter((p) => p.status !== 'ENCERRADA');
+  const encerradas = time.partidas.filter((p) => p.status === 'ENCERRADA');
+  const elenco = [...time.elenco].sort((a, b) =>
+    (ORDEM_POSICAO[a.posicao] ?? 9) - (ORDEM_POSICAO[b.posicao] ?? 9) || (a.numero ?? 99) - (b.numero ?? 99));
   const artilheiros = artilheirosDoTime(time.elenco);
-  const totalGolsTime = time.elenco.reduce((soma, j) => soma + (j.gols ?? 0), 0);
-  const percentualGols = totalGolsTime > 0 ? Math.round(((selecionado.gols ?? 0) / totalGolsTime) * 100) : 0;
+  const cartoes = time.elenco.reduce((s, j) => s + (j.cartoes ?? 0), 0);
+  const l = linha ?? {};
+
+  const resumo = [
+    ['Classificação', posicao > 0 ? `${posicao}º` : '–'],
+    ['Pontos', l.pontos ?? 0],
+    ['Vitórias - Derrotas', `${l.vitorias ?? 0} - ${l.derrotas ?? 0}`],
+    ['Empates', l.empates ?? 0],
+    ['GP', l.gols_pro ?? 0],
+    ['GC', l.gols_contra ?? 0],
+    ['SG', l.saldo ?? 0],
+    ['Cartões', cartoes],
+  ];
 
   return (
-    <>
-      <div className="elenco-tiras" role="tablist" aria-label="Jogadores do elenco">
-        {time.elenco.map((j) => (
-          <button
-            key={j.id}
-            type="button"
-            role="tab"
-            aria-selected={j.id === selecionado.id}
-            className={`elenco-tira${j.id === selecionado.id ? ' ativa' : ''}`}
-            style={{ '--cor-time': time.cor }}
-            onClick={() => setSelecionadoId(j.id)}
-          >
-            <FotoJogador jogador={j} corTime={time.cor} tamanho={56} />
-            <span>{j.numero ?? '–'}</span>
-          </button>
-        ))}
-      </div>
+    <div className="tm" style={{ '--cor-time': time.cor }}>
+      <header className="tm-hero">
+        <div className="tm-hero-marca" aria-hidden="true"><Escudo time={time} tamanho={420} /></div>
+        <div className="container tm-hero-conteudo">
+          <Link to="/times" className="etiqueta fria tm-voltar"><ArrowLeft className="i" />Todos os times</Link>
+          <Escudo time={time} tamanho={132} />
+          <h1>{time.nome}</h1>
+          {time.apelido && <p className="tm-apelido">{time.apelido}</p>}
+        </div>
+      </header>
 
-      <article className="elenco-detalhe" key={selecionado.id}>
-        <div className="elenco-detalhe-foto" style={{ boxShadow: `0 0 0 3px ${time.cor}66, 0 20px 40px -12px ${time.cor}99` }}>
-          <FotoJogador jogador={selecionado} corTime={time.cor} tamanho={220} prioridade />
-        </div>
-        <div className="elenco-detalhe-info">
-          <div className="badges">
-            <span className="etiqueta fria">{NOMES_POSICAO[selecionado.posicao] ?? selecionado.posicao}</span>
-            {artilheiros.has(selecionado.id) && (
-              <span className="etiqueta"><Star className="i" />Artilheiro do time</span>
-            )}
-            {(selecionado.gols ?? 0) > 0 && (
-              <span className="etiqueta fria"><TrendingUp className="i" />{percentualGols}% dos gols do time</span>
-            )}
-            {selecionado.posicao === 'GOLEIRO' && (
-              <span className="etiqueta fria"><ShieldCheck className="i" />{cleanSheetsDoTime(time)} jogos sem sofrer gol</span>
-            )}
-          </div>
-          <h3 style={{ fontSize: 26, marginTop: 4 }}>{selecionado.apelido || selecionado.nome}</h3>
-          <div className="meta" style={{ fontFamily: 'var(--dados)', fontSize: 11, letterSpacing: '.1em', color: 'rgba(var(--texto-rgb), 0.5)' }}>
-            {selecionado.nome}{selecionado.idade ? ` · ${selecionado.idade} anos` : ''}
-          </div>
-          <div className="stats" style={{ marginTop: 18 }}>
-            <div><span className="n">{selecionado.numero ?? '–'}</span><span className="l">Camisa</span></div>
-            <div><Contador valor={selecionado.gols} /><span className="l">Gols</span></div>
-            <div><Contador valor={selecionado.assistencias} /><span className="l">Assistências</span></div>
-            <div><Contador valor={selecionado.cartoes} /><span className="l">Cartões</span></div>
+      <section className="container tm-resumo-caixa">
+        <div className="tm-resumo">
+          <span className="tm-resumo-titulo">Temporada 2026 · Liga Pé de Porco</span>
+          <div className="tm-resumo-grade">
+            {resumo.map(([rotulo, valor]) => (
+              <div key={rotulo}><strong>{valor}</strong><span>{rotulo}</span></div>
+            ))}
           </div>
         </div>
-      </article>
-    </>
+      </section>
+
+      {time.descricao && (
+        <section className="container"><p className="tm-descricao">{time.descricao}</p></section>
+      )}
+
+      {proximos.length > 0 && (
+        <section className="container secao">
+          <div className="secao-topo"><h2><CalendarDays />Próximos jogos</h2></div>
+          <div className="tm-jogos">
+            {proximos.map((p) => (
+              <article key={p.id} className="tm-jogo">
+                <header>
+                  <strong>{dataLonga(p.horario)}</strong>
+                  <span className="tm-chip">{p.rodada_fase && p.rodada_fase !== 'LIGA' ? p.rodada_nome : `Rodada ${p.rodada}`}</span>
+                </header>
+                <small>{horaCurta(p.horario)}</small>
+                {[['casa', p.time_casa_id, p.gols_casa], ['fora', p.time_fora_id, p.gols_fora]].map(([lado, id, gols]) => (
+                  <div key={lado} className={`tm-jogo-linha${id === time.id ? ' meu' : ''}`}>
+                    <b>{sigla(p[lado])}</b>
+                    <Escudo time={{ nome: p[lado], cor: p[`${lado}_cor`], escudo_url: p[`${lado}_escudo`] }} tamanho={30} />
+                    <span className="tm-placar">{p.status === 'AO_VIVO' ? gols ?? 0 : '-'}</span>
+                  </div>
+                ))}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="container secao">
+        <div className="secao-topo"><h2><Users />Elenco</h2><span className="etiqueta fria">{elenco.length} jogadores</span></div>
+        {elenco.length === 0 && <p className="vazio">Elenco ainda não cadastrado.</p>}
+        <div className="tm-elenco">
+          {(time.presidente || time.tecnico) && (
+            <aside className="tm-comissao">
+              <div className="tm-comissao-capa"><Escudo time={time} tamanho={120} /></div>
+              {time.presidente && <div className="tm-comissao-nome"><strong>{time.presidente}</strong><span>Presid.</span></div>}
+              {time.tecnico && <div className="tm-comissao-nome"><strong>{time.tecnico}</strong><span>Técnico</span></div>}
+            </aside>
+          )}
+          <div className="tm-jogadores">
+            {elenco.map((j) => (
+              <article key={j.id} className="tm-jogador">
+                <div className="tm-jogador-foto">
+                  <FotoJogador jogador={j} corTime={time.cor} tamanho={104} />
+                  <span className="tm-numero">#{j.numero ?? '–'}</span>
+                </div>
+                <div className="tm-jogador-info">
+                  <div className="tm-jogador-topo">
+                    <div>
+                      <strong>{j.apelido || j.nome}</strong>
+                      <span>{j.apelido ? j.nome : NOMES_POSICAO[j.posicao] ?? j.posicao}</span>
+                    </div>
+                    <span className="tm-media" title={NOMES_POSICAO[j.posicao]}>
+                      {artilheiros.has(j.id) ? <Star className="i" /> : null}
+                      {NOMES_POSICAO[j.posicao] ?? j.posicao}
+                    </span>
+                  </div>
+                  <div className="tm-stats">
+                    <div><small>Gols</small><strong>{j.gols ?? 0}</strong></div>
+                    <div><small>Assist.</small><strong>{j.assistencias ?? 0}</strong></div>
+                    <div><small>Cartões</small><strong>{j.cartoes ?? 0}</strong></div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container secao">
+        <div className="secao-topo"><h2>Histórico</h2></div>
+        <div className="tm-historico">
+          {resumo.slice(1).map(([rotulo, valor]) => (
+            <div key={rotulo}><strong>{valor}</strong><span>{rotulo}</span></div>
+          ))}
+        </div>
+        {encerradas.length > 0 && (
+          <div className="tabela-rolagem" style={{ marginTop: 24 }}>
+            <table className="tabela">
+              <thead><tr><th>Rodada</th><th>Confronto</th><th>Placar</th></tr></thead>
+              <tbody>
+                {encerradas.map((p) => (
+                  <tr key={p.id}>
+                    <td className="pos">{p.rodada}</td>
+                    <td className="time">{p.casa} × {p.fora}</td>
+                    <td className="pontos">{p.gols_casa} × {p.gols_fora}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
