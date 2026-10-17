@@ -424,3 +424,33 @@ a.patrocinador-slot{cursor:pointer;text-decoration:none}
 .tm-media small{font-size:9px;font-weight:600}
 .tm-stats div{background:#1c1c1c;border-radius:6px;padding:9px 4px}
 .tm-stats small{font-size:10px;margin-bottom:4px}
+
+/* ---------- página de patrocinadores por categoria ---------- */
+.pat-grupo{margin-top:34px}
+.pat-grupo-topo{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pat-titulo{display:flex;align-items:center;gap:10px;font-size:22px;text-transform:uppercase;letter-spacing:.02em}
+.pat-titulo svg{width:26px;height:26px}
+.pat-titulo-master,.pat-titulo-ouro{color:var(--acento)}
+.pat-titulo-apoiador{color:var(--suave)}
+.pat-grade{display:grid;gap:16px}
+.pat-grade-master{grid-template-columns:1fr}
+.pat-grade-ouro{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.pat-grade-apoiador{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.pat-cartao{display:flex;align-items:center;gap:20px;background:var(--s1);border:1px solid var(--linha);border-radius:var(--r);padding:16px 22px;text-decoration:none;color:var(--texto);transition:transform .18s,border-color .18s}
+a.pat-cartao:hover{transform:translateY(-2px)}
+.pat-master,.pat-ouro{border-color:color-mix(in srgb,var(--acento) 60%,transparent)}
+.pat-master{padding:22px 40px;background:linear-gradient(90deg,color-mix(in srgb,var(--acento) 10%,var(--s1)),var(--s1))}
+a.pat-master:hover,a.pat-ouro:hover{border-color:var(--acento)}
+a.pat-apoiador:hover{border-color:var(--linha-f)}
+.pat-logo{flex:none;display:grid;place-items:center;width:110px;height:80px;padding-right:20px;border-right:1px solid var(--linha-f)}
+.pat-master .pat-logo{width:240px;height:110px;padding-right:40px}
+.pat-logo img{max-width:100%;max-height:100%;object-fit:contain}
+.pat-logo span{font-size:12px;text-align:center;color:var(--suave)}
+.pat-info strong{display:block;font-size:15px}
+.pat-master .pat-info strong{font-size:18px}
+.pat-info span{font-size:13px;color:var(--suave)}
+@media (max-width:600px){
+  .pat-master{padding:16px;gap:14px}
+  .pat-master .pat-logo{width:130px;height:90px;padding-right:14px}
+  .pat-cartao{padding:14px}
+}

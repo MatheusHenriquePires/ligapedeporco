@@ -17,7 +17,8 @@ const ABAS = [
   { id: 'patrocinadores', rotulo: 'Patrocinadores' },
 ];
 
-const vazioPatrocinador = { nome: '', instagram: '', logo_url: '', ordem: 0 };
+const vazioPatrocinador = { nome: '', instagram: '', logo_url: '', categoria: 'APOIADOR', ordem: 0 };
+const ROTULO_CATEGORIA = { MASTER: 'Master', OURO: 'Ouro', APOIADOR: 'Apoiador' };
 
 const vazioTime = { nome: '', apelido: '', presidente: '', tecnico: '', cor: '#6E7BFF', escudo_url: '', descricao: '' };
 const vazioJogador = { time_id: '', nome: '', apelido: '', posicao: 'LINHA', numero: '', idade: '', foto_url: '', gols: 0, assistencias: 0, cartoes: 0, destaque: false };
@@ -195,7 +196,7 @@ function PainelPatrocinadores({ avisar }) {
             <Escudo time={{ nome: p.nome, cor: '#6E7BFF', escudo_url: p.logo_url }} tamanho={40} />
             <div className="info">
               <strong>{p.nome}</strong>
-              <small>{p.instagram ? `Instagram: ${p.instagram}` : 'sem Instagram'}</small>
+              <small>{ROTULO_CATEGORIA[p.categoria] ?? 'Apoiador'} · {p.instagram ? `Instagram: ${p.instagram}` : 'sem Instagram'}</small>
             </div>
             <div className="acoes">
               <button className="btn vazado mini" onClick={() => abrirEdicao(p)}>Editar</button>
@@ -212,6 +213,14 @@ function PainelPatrocinadores({ avisar }) {
           <div className="campo">
             <label>Instagram</label>
             <input value={form.instagram ?? ''} onChange={mudar('instagram')} placeholder="@perfil ou https://instagram.com/perfil" />
+          </div>
+          <div className="campo">
+            <label>Categoria</label>
+            <select value={form.categoria ?? 'APOIADOR'} onChange={mudar('categoria')}>
+              <option value="MASTER">Master</option>
+              <option value="OURO">Ouro</option>
+              <option value="APOIADOR">Apoiador</option>
+            </select>
           </div>
           <div className="campo"><label>Ordem de exibição</label><input type="number" value={form.ordem ?? 0} onChange={mudar('ordem')} /></div>
           <CampoImagem

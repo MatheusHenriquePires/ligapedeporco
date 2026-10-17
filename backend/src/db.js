@@ -33,8 +33,10 @@ export async function garantirTabelas() {
   nome          TEXT NOT NULL,
   instagram     TEXT,
   logo_url      TEXT,
+  categoria     TEXT NOT NULL DEFAULT 'APOIADOR',   -- MASTER | OURO | APOIADOR
   ordem         INTEGER NOT NULL DEFAULT 0,
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 `);
+  await pool.query("ALTER TABLE patrocinadores ADD COLUMN IF NOT EXISTS categoria TEXT NOT NULL DEFAULT 'APOIADOR'");
 }

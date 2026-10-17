@@ -2,6 +2,9 @@ import { query, one } from '../db.js';
 import { exigirAdmin } from '../auth.js';
 import { validarImagem, enviarImagem, removerImagem, caminhoDaUrlPublica } from '../storage.js';
 
+const CATEGORIAS = ['MASTER', 'OURO', 'APOIADOR'];
+const categoriaValida = (c) => (CATEGORIAS.includes(c) ? c : 'APOIADOR');
+
 export default async function rotasPatrocinadores(app) {
   app.get('/', async () =>
     query('SELECT * FROM patrocinadores ORDER BY ordem, id')
@@ -11,9 +14,9 @@ export default async function rotasPatrocinadores(app) {
     const b = request.body ?? {};
     if (!b.nome) return reply.code(400).send({ erro: 'O patrocinador precisa de um nome.' });
     return one(
-      `INSERT INTO patrocinadores (nome, instagram, logo_url, ordem)
-       VALUES ($1,$2,$3,COALESCE($4,0)) RETURNING *`,
-      [b.nome, b.instagram || null, b.logo_url || null, b.ordem === '' ? null : b.ordem]
+      `INSERT INTO patrocinadores (nome, instagram, logo_url, categoria, ordem)
+       VALUES ($1,$2,$3,$4,COALESCE($5,0)) RETURNING *`,
+      [b.nome, b.instagram || null, b.logo_url || null, categoriaValida(b.categoria), b.ordem === '' ? null : b.ordem]
     );
   });
 
@@ -21,9 +24,9 @@ export default async function rotasPatrocinadores(app) {
     const b = request.body ?? {};
     const item = await one(
       `UPDATE patrocinadores SET nome=COALESCE($2,nome), instagram=$3, logo_url=$4,
-              ordem=COALESCE($5,ordem)
+              categoria=$6, ordem=COALESCE($5,ordem)
        WHERE id=$1 RETURNING *`,
-      [request.params.id, b.nome, b.instagram || null, b.logo_url || null, b.ordem === '' ? null : b.ordem]
+      [request.params.id, b.nome, b.instagram || null, b.logo_url || null, b.ordem === '' ? null : b.ordem, categoriaValida(b.categoria)]
     );
     if (!item) return reply.code(404).send({ erro: 'Patrocinador não encontrado.' });
     return item;
