@@ -56,7 +56,7 @@ export async function buildApp() {
   if (!process.env.VERCEL && existsSync(dist)) {
     await app.register(fastifyStatic, { root: dist, wildcard: false });
     app.setNotFoundHandler((request, reply) => {
-      if (request.method !== 'GET' || request.url.startsWith('/api/')) {
+      if (request.method !== 'GET' || /^\/(api|uploads)\//.test(request.url)) {
         return reply.code(404).send({ erro: 'Rota não encontrada.' });
       }
       return reply.sendFile('index.html');
