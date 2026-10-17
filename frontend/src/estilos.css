@@ -281,15 +281,15 @@ button{font-family:inherit;cursor:pointer}
 .patrocinadores{padding-top:32px;padding-bottom:36px}
 .patrocinadores-fita{display:flex;gap:14px;flex-wrap:wrap}
 .patrocinador-slot{
-  flex:1 1 140px;min-width:120px;height:60px;
-  display:grid;place-items:center;text-align:center;
+  flex:1 1 140px;min-width:120px;height:84px;padding:12px 16px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;text-align:center;
   border:1px dashed var(--linha-f);border-radius:var(--r);
   color:var(--fraco);font-family:var(--dados);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
   filter:grayscale(1);opacity:.6;transition:opacity .2s,color .2s,filter .2s;
 }
 .patrocinador-slot:hover{opacity:1;color:var(--texto);filter:grayscale(0)}
 a.patrocinador-slot{cursor:pointer;text-decoration:none}
-.patrocinador-slot img{max-width:100%;max-height:100%;object-fit:contain}
+.patrocinador-slot img{width:100%;height:100%;object-fit:contain}
 .grade-patrocinadores{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
 .card-patrocinador{
   height:130px;display:grid;place-items:center;padding:18px;text-align:center;
