@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, CalendarDays } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { api } from '../api.js';
 import Escudo from '../components/Escudo.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
@@ -70,23 +70,28 @@ export default function TimeDetalhe() {
   return (
     <div className="tm" style={{ '--cor-time': time.cor }}>
       <header className="tm-hero">
-        <div className="tm-hero-marca" aria-hidden="true"><Escudo time={time} tamanho={420} /></div>
+        <span className="tm-brilho" aria-hidden="true" />
+        <span className="tm-anel tm-anel-1" aria-hidden="true" />
+        <span className="tm-anel tm-anel-2" aria-hidden="true" />
         <div className="container tm-hero-conteudo">
-          <Link to="/times" className="etiqueta fria tm-voltar"><ArrowLeft className="i" />Todos os times</Link>
-          <Escudo time={time} tamanho={132} />
+          <Link to="/times" className="tm-voltar"><ArrowLeft className="i" />Todos os times</Link>
+          <div className="tm-escudo"><Escudo time={time} tamanho={132} /></div>
           <h1>{time.nome}</h1>
-          {time.apelido && <p className="tm-apelido">{time.apelido}</p>}
+          <p className="tm-apelido">Liga Pé de Porco · Temporada 2026</p>
+          <div className="tm-etiquetas">
+            {posicao > 0 && <span className="destaque">🏆 {posicao}º na classificação</span>}
+            <span>{elenco.length} {elenco.length === 1 ? 'jogador' : 'jogadores'}</span>
+            {time.presidente && <span>Presidente: {time.presidente}</span>}
+            {time.tecnico && <span>Técnico: {time.tecnico}</span>}
+          </div>
         </div>
       </header>
 
       <section className="container tm-resumo-caixa">
-        <div className="tm-resumo">
-          <span className="tm-resumo-titulo">Temporada 2026 · Liga Pé de Porco</span>
-          <div className="tm-resumo-grade">
-            {resumo.map(([rotulo, valor]) => (
-              <div key={rotulo}><strong>{valor}</strong><span>{rotulo}</span></div>
-            ))}
-          </div>
+        <div className="tm-faixa">
+          {resumo.map(([rotulo, valor], i) => (
+            <div key={rotulo} className={i === 0 ? 'destaque' : undefined}><strong>{valor}</strong><span>{rotulo}</span></div>
+          ))}
         </div>
       </section>
 
@@ -96,7 +101,7 @@ export default function TimeDetalhe() {
 
       {proximos.length > 0 && (
         <section className="container secao">
-          <div className="secao-topo"><h2><CalendarDays />Próximos jogos</h2></div>
+          <div className="secao-topo tm-titulo"><div><h2>Próximos jogos</h2><p>Agenda da temporada</p></div><span className="etiqueta fria">{proximos.length} {proximos.length === 1 ? 'partida' : 'partidas'}</span></div>
           <div className="tm-jogos">
             {proximos.map((p) => (
               <article key={p.id} className="tm-jogo">
@@ -119,13 +124,13 @@ export default function TimeDetalhe() {
       )}
 
       <section className="container secao">
-        <div className="secao-topo"><h2><Users />Elenco</h2><span className="etiqueta fria">{elenco.length} jogadores</span></div>
+        <div className="secao-topo tm-titulo"><div><h2>Elenco</h2><p>Quem defende as cores do {time.nome}</p></div><span className="etiqueta fria">{elenco.length} jogadores</span></div>
         {elenco.length === 0 && <p className="vazio">Elenco ainda não cadastrado.</p>}
         <div className="tm-elenco">
           {(time.presidente || time.tecnico) && (
             <aside className="tm-comissao">
-              <div className="tm-comissao-capa"><Escudo time={time} tamanho={120} /></div>
-              {time.presidente && <div className="tm-comissao-nome"><strong>{time.presidente}</strong><span>Presid.</span></div>}
+              <div className="tm-comissao-capa"><div className="tm-escudo mini"><Escudo time={time} tamanho={72} /></div></div>
+              {time.presidente && <div className="tm-comissao-nome"><strong>{time.presidente}</strong><span>Presidente</span></div>}
               {time.tecnico && <div className="tm-comissao-nome"><strong>{time.tecnico}</strong><span>Técnico</span></div>}
             </aside>
           )}
@@ -133,24 +138,20 @@ export default function TimeDetalhe() {
             {elenco.map((j) => (
               <article key={j.id} className="tm-jogador">
                 <div className="tm-jogador-foto">
-                  <FotoJogador jogador={j} corTime={time.cor} tamanho={104} />
+                  <span className="tm-numero-grande" aria-hidden="true">{j.numero ?? ''}</span>
+                  <FotoJogador jogador={j} corTime={time.cor} tamanho={288} />
+                  <span className="tm-media" title={NOMES_POSICAO[j.posicao]}>{SIGLA_POSICAO[j.posicao] ?? j.posicao}</span>
                   <span className="tm-numero">#{j.numero ?? '–'}</span>
                 </div>
                 <div className="tm-jogador-info">
                   <div className="tm-jogador-topo">
-                    <div>
-                      <strong>{j.apelido || j.nome}</strong>
-                      <span>{NOMES_POSICAO[j.posicao] ?? j.posicao}</span>
-                    </div>
-                    <span className="tm-media" title={NOMES_POSICAO[j.posicao]}>
-                      <small>{artilheiros.has(j.id) ? '★ Time' : 'Pos.'}</small>
-                      {SIGLA_POSICAO[j.posicao] ?? j.posicao}
-                    </span>
+                    <strong>{j.apelido || j.nome}</strong>
+                    <span>{NOMES_POSICAO[j.posicao] ?? j.posicao}{artilheiros.has(j.id) ? ' · ★ Artilheiro do time' : ''}</span>
                   </div>
                   <div className="tm-stats">
-                    <div><small>Gols</small><strong>{j.gols ?? 0}</strong></div>
-                    <div><small>Assist.</small><strong>{j.assistencias ?? 0}</strong></div>
-                    <div><small>Cartões</small><strong>{j.cartoes ?? 0}</strong></div>
+                    <div><strong>{j.gols ?? 0}</strong><small>Gols</small></div>
+                    <div><strong>{j.assistencias ?? 0}</strong><small>Assist.</small></div>
+                    <div><strong>{j.cartoes ?? 0}</strong><small>Cartões</small></div>
                   </div>
                 </div>
               </article>
@@ -160,7 +161,7 @@ export default function TimeDetalhe() {
       </section>
 
       <section className="container secao">
-        <div className="secao-topo"><h2>Histórico</h2></div>
+        <div className="secao-topo tm-titulo"><div><h2>Histórico</h2><p>Números acumulados na temporada</p></div></div>
         <div className="tm-historico">
           {resumo.slice(1).map(([rotulo, valor]) => (
             <div key={rotulo}><strong>{valor}</strong><span>{rotulo}</span></div>
