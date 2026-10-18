@@ -17,6 +17,7 @@ import Patrocinador from '../components/Patrocinador.jsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
+const ORDEM_CATEGORIA = { MASTER: 0, OURO: 1, APOIADOR: 2 };
 const CORES_GRAFICO = ['#E8B923', '#B8BEC7'];
 
 function Contador({ valor }) {
@@ -118,7 +119,9 @@ export default function Home() {
       <FundoLogo />
       <div className="container">
       <header className="hero">
-        <div>
+        <span className="home-brilho home-brilho-1" aria-hidden="true" />
+        <span className="home-brilho home-brilho-2" aria-hidden="true" />
+        <div className="hero-texto">
           {destaque ? (
             <span className="etiqueta">
               {aoVivo && <span className="pulso" />}
@@ -205,17 +208,14 @@ export default function Home() {
           {times.map((time) => {
             const posicao = tabela.findIndex((t) => t.time_id === time.id) + 1;
             return (
-              <Link key={time.id} to={`/times/${time.slug}`} className="card-time">
-                <FotoPlaceholder cor={time.cor} escudoUrl={time.escudo_url} />
-                <span className="veu" />
-                <span className="barra" style={{ background: time.cor }} />
-                {posicao > 0 && <span className="pos-badge">{posicao}º</span>}
+              <Link key={time.id} to={`/times/${time.slug}`} className="card-time" style={{ '--cor-time': time.cor }}>
+                <div className="capa"><Escudo time={time} tamanho={88} /></div>
                 <div className="info">
-                  <h3>{time.nome}</h3>
-                  <div className="meta">
-                    <span><Users className="i" />{time.total_jogadores}</span>
-                    {posicao > 0 && <span><Trophy className="i" />{tabela[posicao - 1].pontos} pts</span>}
+                  <div>
+                    <h3>{time.nome}</h3>
+                    <div className="meta"><span><Users className="i" />{time.total_jogadores} jogadores</span>{posicao > 0 && <span>{posicao}º</span>}</div>
                   </div>
+                  {posicao > 0 && <span className="pts">{tabela[posicao - 1].pontos} pts</span>}
                 </div>
               </Link>
             );
@@ -228,22 +228,41 @@ export default function Home() {
           <div className="secao-topo">
             <div><h2><Star />Artilharia</h2><p>Quem mais balançou as redes</p></div>
           </div>
-          <div className="grade elenco">
-            {artilharia.slice(0, 8).map((j) => (
-              <div key={j.id} className="jog">
-                <div className="foto">
-                  <FotoJogador jogador={j} corTime={j.time_cor} tamanho={120} />
-                  <span className="cor" style={{ background: j.time_cor }} />
-                  <span className="num">{j.gols}</span>
+          <div className="podio">
+            {[1, 0, 2].filter((i) => artilharia[i]).map((i) => {
+              const j = artilharia[i];
+              return (
+                <div key={j.id} className={`podio-item p${i + 1}`} style={{ '--cor-time': j.time_cor }}>
+                  <div className="podio-foto">
+                    <FotoJogador jogador={j} corTime={j.time_cor} tamanho={300} />
+                    <span className="podio-pos">{i + 1}º</span>
+                  </div>
+                  <div className="podio-info">
+                    <div><h4>{j.apelido || j.nome}</h4><span>{j.time_nome ?? 'Sem time'}</span></div>
+                    <div className="podio-gols"><b>{j.gols}</b><small>GOLS</small></div>
+                  </div>
                 </div>
-                <div className="txt">
-                  <h4>{j.apelido || j.nome}</h4>
-                  <div className="pos">{j.time_nome ?? 'Sem time'}</div>
-                  <div className="g"><span><b>{j.gols}</b> gols</span><span><b>{j.assistencias}</b> assist.</span></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+          {artilharia.length > 3 && (
+            <div className="grade elenco" style={{ marginTop: 18 }}>
+              {artilharia.slice(3, 8).map((j) => (
+                <div key={j.id} className="jog">
+                  <div className="foto">
+                    <FotoJogador jogador={j} corTime={j.time_cor} tamanho={120} />
+                    <span className="cor" style={{ background: j.time_cor }} />
+                    <span className="num">{j.gols}</span>
+                  </div>
+                  <div className="txt">
+                    <h4>{j.apelido || j.nome}</h4>
+                    <div className="pos">{j.time_nome ?? 'Sem time'}</div>
+                    <div className="g"><span><b>{j.gols}</b> gols</span><span><b>{j.assistencias}</b> assist.</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -323,7 +342,7 @@ export default function Home() {
         <section className="secao patrocinadores">
           <div className="secao-topo"><div><h2 style={{ fontSize: 15 }}>Apoio</h2><p>Marcas que apoiam a liga</p></div><Link to="/patrocinadores" className="ver-mais">Ver todos<ArrowRight className="i" /></Link></div>
           <div className="patrocinadores-fita">
-            {patrocinadores.map((p) => <Patrocinador key={p.id} p={p} />)}
+            {[...patrocinadores].sort((a, b) => ORDEM_CATEGORIA[a.categoria ?? 'APOIADOR'] - ORDEM_CATEGORIA[b.categoria ?? 'APOIADOR']).map((p) => <Patrocinador key={p.id} p={p} classe={`patrocinador-slot pat-slot-${(p.categoria ?? 'APOIADOR').toLowerCase()}`} />)}
           </div>
         </section>
       )}

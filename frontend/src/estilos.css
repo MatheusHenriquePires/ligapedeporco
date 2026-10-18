@@ -464,3 +464,72 @@ a.pat-apoiador:hover{border-color:var(--linha-f)}
   .pat-master .pat-logo{width:130px;height:90px;padding-right:14px}
   .pat-cartao{padding:14px}
 }
+
+/* ---------- Home remodelada ---------- */
+.pagina-inicial{overflow-x:clip}
+.hero{position:relative;padding:88px 0 72px;gap:64px}
+.hero-texto{position:relative;z-index:1}
+.home-brilho{position:absolute;border-radius:50%;filter:blur(160px);pointer-events:none;z-index:0}
+.home-brilho-1{width:620px;height:620px;left:-240px;top:-160px;background:var(--acento);opacity:.22}
+.home-brilho-2{width:560px;height:560px;right:-200px;top:80px;background:#5560E8;opacity:.28}
+.hero h1{font-size:clamp(46px,7vw,84px);line-height:1;letter-spacing:-.03em;margin-top:22px}
+.hero p{font-size:17px;max-width:46ch;margin:24px 0 30px}
+.hero-acoes .btn{padding:16px 26px;border-radius:12px;font-size:15px}
+.stats{display:flex;gap:12px;background:none;border:none;border-radius:0;overflow:visible;margin-top:34px;flex-wrap:wrap}
+.stats div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 20px;min-width:96px}
+.stats .ic{display:none}
+.stats .n{font-size:28px;font-weight:700}
+.live{position:relative;z-index:1;background:rgba(13,14,17,.85);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);border-radius:24px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.live-top{background:none;border-bottom:none;padding:22px 28px 0}
+.placar{padding:26px 28px 18px}
+.nums{font-size:64px;font-weight:800}
+.min{margin:0 28px 28px;padding:12px 16px;border-radius:12px;background:var(--s2);justify-content:center;color:var(--acento);font-weight:600;font-size:13px}
+
+.pagina-inicial .secao{padding:56px 0}
+.pagina-inicial .secao-topo > div:first-child{border-left:5px solid var(--acento);padding-left:14px}
+.pagina-inicial .secao-topo h2{font-size:28px}
+.pagina-inicial .secao-topo h2 svg{display:none}
+.pagina-inicial .secao-topo p{color:var(--suave);margin-top:2px}
+.pagina-inicial .jogo{border-radius:20px;padding:22px}
+.pagina-inicial .linha-time{background:var(--s2);border-radius:14px;padding:12px;margin-top:8px}
+
+.grade.times{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.card-time{aspect-ratio:auto;justify-content:flex-start;border-radius:22px;background:var(--s1)}
+.card-time .capa{display:grid;place-items:center;height:170px;background:linear-gradient(180deg,var(--cor-time),#0b0c1f)}
+.card-time .info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px}
+.card-time h3{font-size:18px;margin-bottom:3px}
+.card-time .pts{background:var(--acento);color:var(--acento-tx);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+
+.podio{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:end}
+.podio-item{border-radius:22px;overflow:hidden;background:var(--s1);border:1px solid var(--linha)}
+.podio-item.p1{border:2px solid var(--acento)}
+.podio-foto{position:relative;height:200px;background:linear-gradient(180deg,var(--cor-time),#0b0c1f)}
+.podio-item.p1 .podio-foto{height:250px}
+.podio-foto .foto-jogador{position:absolute;inset:0;width:100%!important;height:100%!important;border-radius:0}
+.podio-foto .foto-jogador img{object-fit:cover;object-position:center top}
+.podio-foto .foto-jogador-marcador{display:none}
+.podio-pos{position:absolute;z-index:2;top:16px;left:16px;padding:8px 14px;border-radius:10px;background:#C0C6D0;color:#1a1206;font-family:var(--display);font-weight:800;font-size:15px}
+.podio-item.p1 .podio-pos{background:var(--acento)}
+.podio-item.p3 .podio-pos{background:#C98A4B}
+.podio-info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px}
+.podio-info h4{font-family:var(--display);font-size:20px}
+.podio-item.p1 .podio-info h4{font-size:22px}
+.podio-info span{font-size:13px;color:var(--suave)}
+.podio-gols{display:flex;flex-direction:column;align-items:center}
+.podio-gols b{font-family:var(--display);font-size:38px;font-weight:800;line-height:1}
+.podio-item.p1 .podio-gols b{font-size:48px;color:var(--acento)}
+.podio-gols small{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--suave)}
+
+.painel-grafico{border-radius:24px;padding:32px}
+.tabela-rolagem{border-radius:22px;overflow:hidden;border:1px solid var(--linha)}
+
+.patrocinadores-fita{align-items:stretch}
+.patrocinador-slot.pat-slot-master,.patrocinador-slot.pat-slot-ouro{border:1px solid color-mix(in srgb,var(--acento) 55%,transparent);border-style:solid;opacity:1;filter:none}
+.patrocinador-slot.pat-slot-master{flex:2 1 280px;height:104px;background:#1B1708}
+
+@media (max-width:1000px){
+  .hero{padding-top:48px}
+  .podio{grid-template-columns:1fr}
+  .podio-item.p1 .podio-foto,.podio-foto{height:200px}
+}
+@media (max-width:1000px){ .podio-item.p1{order:-1} .podio-item.p3{order:2} }
