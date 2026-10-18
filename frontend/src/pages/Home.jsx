@@ -119,8 +119,6 @@ export default function Home() {
       <FundoLogo />
       <div className="container">
       <header className="hero">
-        <span className="home-brilho home-brilho-1" aria-hidden="true" />
-        <span className="home-brilho home-brilho-2" aria-hidden="true" />
         <div className="hero-texto">
           {destaque ? (
             <span className="etiqueta">

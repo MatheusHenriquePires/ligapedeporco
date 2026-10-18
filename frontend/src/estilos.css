@@ -469,9 +469,6 @@ a.pat-apoiador:hover{border-color:var(--linha-f)}
 .pagina-inicial{overflow-x:clip}
 .hero{position:relative;padding:88px 0 72px;gap:64px}
 .hero-texto{position:relative;z-index:1}
-.home-brilho{position:absolute;border-radius:50%;filter:blur(160px);pointer-events:none;z-index:0}
-.home-brilho-1{width:620px;height:620px;left:-240px;top:-160px;background:var(--acento);opacity:.22}
-.home-brilho-2{width:560px;height:560px;right:-200px;top:80px;background:#5560E8;opacity:.28}
 .hero h1{font-size:clamp(46px,7vw,84px);line-height:1;letter-spacing:-.03em;margin-top:22px}
 .hero p{font-size:17px;max-width:46ch;margin:24px 0 30px}
 .hero-acoes .btn{padding:16px 26px;border-radius:12px;font-size:15px}
