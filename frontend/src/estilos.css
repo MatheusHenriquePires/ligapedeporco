@@ -530,3 +530,37 @@ a.pat-apoiador:hover{border-color:var(--linha-f)}
   .podio-item.p1 .podio-foto,.podio-foto{height:200px}
 }
 @media (max-width:1000px){ .podio-item.p1{order:-1} .podio-item.p3{order:2} }
+
+/* ---------- página Times (cartões de clube) ---------- */
+.tms{border-top:none;padding-top:64px}
+.tms-topo{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:32px}
+.tms-eyebrow{display:block;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acento);margin-bottom:10px}
+.tms-topo h1{font-size:clamp(36px,5vw,52px);line-height:1.05}
+.tms-topo p{color:var(--suave);font-size:15px;margin-top:8px}
+.tms-contador{padding:9px 16px;border-radius:99px;background:var(--s3);font-size:13px;font-weight:600}
+.tms-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:24px}
+.tms-card{display:flex;flex-direction:column;border-radius:22px;overflow:hidden;background:var(--s1);border:1px solid var(--linha);transition:transform .25s,border-color .25s}
+.tms-card:hover{transform:translateY(-4px);border-color:var(--cor-time)}
+.tms-capa{position:relative;display:grid;place-items:center;height:160px;background:linear-gradient(180deg,var(--cor-time),color-mix(in srgb,var(--cor-time) 25%,var(--s1)) 78%,var(--s1))}
+.tms-pos{position:absolute;left:18px;top:8px;font-family:var(--display);font-weight:800;font-size:46px;line-height:1.1;color:#fff}
+.tms-escudo{display:grid;place-items:center;width:82px;height:82px;border-radius:22px;background:var(--bg);border:3px solid var(--cor-time);font-family:var(--display);font-weight:800;font-size:30px;color:#fff;overflow:hidden;margin-top:6px}
+.tms-escudo img{width:100%;height:100%;object-fit:contain;padding:6px}
+.tms-corpo{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 18px 20px}
+.tms-corpo h3{font-size:22px;font-weight:800;line-height:1.15}
+.tms-elenco{font-size:13px;color:var(--suave)}
+.tms-numeros{display:grid;grid-template-columns:repeat(3,1fr);width:100%;margin-top:14px;padding:14px 8px;border-radius:14px;background:var(--bg)}
+.tms-numeros strong{display:block;font-family:var(--display);font-size:20px;font-weight:700}
+.tms-numeros span{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--suave)}
+.tms-forma{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.tms-forma-titulo{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--suave)}
+.tms-forma div{display:flex;gap:6px}
+.tms-forma i{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--s3);color:var(--fraco);font-style:normal;font-size:11px;font-weight:700}
+.tms-forma i.fv{background:#1f7a4a;color:#fff}
+.tms-forma i.fe{background:#6B727D;color:#fff}
+.tms-forma i.fd{background:#b43c4a;color:#fff}
+.tms-botao{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;padding:13px;border-radius:12px;background:var(--s3);font-size:14px;font-weight:600;transition:background .2s,color .2s}
+.tms-card:hover .tms-botao{background:var(--acento);color:var(--acento-tx)}
+@media (max-width:600px){
+  .tms{padding-top:36px}
+  .tms-grade{grid-template-columns:1fr}
+}
