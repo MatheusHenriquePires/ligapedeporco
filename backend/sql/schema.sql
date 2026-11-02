@@ -1,4 +1,5 @@
 -- Liga Pé de Porco :: esquema do banco
+DROP TABLE IF EXISTS cartoes_partida CASCADE;
 DROP TABLE IF EXISTS gols_partida CASCADE;
 DROP TABLE IF EXISTS partidas CASCADE;
 DROP TABLE IF EXISTS jogadores CASCADE;
@@ -25,6 +26,7 @@ CREATE TABLE times (
   cor           TEXT NOT NULL DEFAULT '#E8B33D',
   escudo_url    TEXT,
   descricao     TEXT,
+  desempate_manual INTEGER,                         -- posicao definida pela Comissao em empate total (menor = melhor)
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -63,6 +65,7 @@ CREATE TABLE partidas (
   gols_casa     INTEGER,
   gols_fora     INTEGER,
   horario       TIMESTAMPTZ,
+  ordem         INTEGER,                          -- ordem do jogo dentro da rodada (1, 2, 3...)
   status        TEXT NOT NULL DEFAULT 'AGENDADA', -- AGENDADA | AO_VIVO | ENCERRADA
   vencedor_id   INTEGER REFERENCES times(id) ON DELETE SET NULL, -- só usado em empate de mata-mata
   decisao       TEXT,                              -- PENALTIS | null
@@ -79,6 +82,16 @@ CREATE TABLE gols_partida (
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE cartoes_partida (
+  id            SERIAL PRIMARY KEY,
+  partida_id    INTEGER NOT NULL REFERENCES partidas(id) ON DELETE CASCADE,
+  time_id       INTEGER NOT NULL REFERENCES times(id) ON DELETE CASCADE,
+  jogador_id    INTEGER REFERENCES jogadores(id) ON DELETE SET NULL,
+  tipo          TEXT NOT NULL CHECK (tipo IN ('AMARELO','VERMELHO')),
+  criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_cartoes_partida_partida ON cartoes_partida(partida_id);
 CREATE INDEX idx_jogadores_time ON jogadores(time_id);
 CREATE INDEX idx_partidas_rodada ON partidas(rodada_id);
 CREATE INDEX idx_gols_partida_partida ON gols_partida(partida_id);

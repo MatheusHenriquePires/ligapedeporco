@@ -1,19 +1,21 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, ImageOff, Goal, Trophy, AlertTriangle, Shuffle } from 'lucide-react';
+import { Search, Plus, ImageOff, Goal } from 'lucide-react';
 import { api, apiUpload, adminSalvo, limparSessao } from '../api.js';
 import Modal from '../components/Modal.jsx';
 import ModalConfirmar from '../components/ModalConfirmar.jsx';
 import CampoImagem from '../components/CampoImagem.jsx';
 import Escudo from '../components/Escudo.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
+import { GeradorCalendario, CartoesPartida, PainelDesempate, PainelGrandeFinal } from './AdminFormato.jsx';
 
 const ABAS = [
   { id: 'times', rotulo: 'Times' },
   { id: 'jogadores', rotulo: 'Jogadores' },
   { id: 'rodadas', rotulo: 'Rodadas' },
   { id: 'partidas', rotulo: 'Partidas e placares' },
-  { id: 'mata-mata', rotulo: 'Mata-mata' },
+  { id: 'classificacao', rotulo: 'Classificação' },
+  { id: 'final', rotulo: 'Grande Final' },
   { id: 'patrocinadores', rotulo: 'Patrocinadores' },
 ];
 
@@ -23,31 +25,10 @@ const ROTULO_CATEGORIA = { MASTER: 'Master', OURO: 'Ouro', APOIADOR: 'Apoiador' 
 const vazioTime = { nome: '', apelido: '', presidente: '', tecnico: '', cor: '#6E7BFF', escudo_url: '', descricao: '' };
 const vazioJogador = { time_id: '', nome: '', apelido: '', posicao: 'LINHA', numero: '', idade: '', foto_url: '', gols: 0, assistencias: 0, cartoes: 0, destaque: false };
 const vazioRodada = { numero: '', nome: '', data: '', local: '', status: 'AGENDADA' };
-const vazioPartida = { rodada_id: '', time_casa_id: '', time_fora_id: '', horario: '', status: 'AGENDADA' };
+const vazioPartida = { rodada_id: '', time_casa_id: '', time_fora_id: '', horario: '', status: 'AGENDADA', ordem: '' };
 
 const normalizar = (texto) => (texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const contem = (texto, busca) => normalizar(texto).includes(normalizar(busca));
-
-/** Turno único (todo mundo contra todo mundo uma vez) pelo método do polígono. */
-function gerarRoundRobin(times) {
-  const lista = [...times];
-  if (lista.length % 2 !== 0) lista.push(null); // time fictício = alguém fica de fora na rodada
-  const n = lista.length;
-  const rodadas = [];
-  let atual = lista;
-
-  for (let r = 0; r < n - 1; r++) {
-    const confrontos = [];
-    for (let i = 0; i < n / 2; i++) {
-      const a = atual[i];
-      const b = atual[n - 1 - i];
-      if (a && b) confrontos.push(r % 2 === 0 ? { casa: a, fora: b } : { casa: b, fora: a });
-    }
-    rodadas.push(confrontos);
-    atual = [atual[0], atual[n - 1], ...atual.slice(1, n - 1)];
-  }
-  return rodadas;
-}
 
 export default function Admin() {
   const navegar = useNavigate();
@@ -109,7 +90,8 @@ export default function Admin() {
       {aba === 'jogadores' && <PainelJogadores {...props} />}
       {aba === 'rodadas' && <PainelRodadas {...props} />}
       {aba === 'partidas' && <PainelPartidas {...props} />}
-      {aba === 'mata-mata' && <PainelMataMata {...props} />}
+      {aba === 'classificacao' && <PainelDesempate {...props} />}
+      {aba === 'final' && <PainelGrandeFinal {...props} />}
       {aba === 'patrocinadores' && <PainelPatrocinadores {...props} />}
     </div>
   );
@@ -572,31 +554,7 @@ function PainelRodadas({ times, rodadas, recarregar, avisar }) {
   const [busca, setBusca] = useState('');
   const [remover, setRemover] = useState(null);
   const [removendo, setRemovendo] = useState(false);
-  const [previa, setPrevia] = useState(null);
-  const [gerando, setGerando] = useState(false);
 
-  const rodadasLiga = rodadas.filter((r) => r.fase === 'LIGA');
-  const outraFase = rodadas.some((r) => r.fase !== 'LIGA');
-
-  function abrirPrevia() {
-    if (times.length < 2) { avisar('Cadastre pelo menos 2 times antes de gerar a temporada.', 'erro'); return; }
-    setPrevia(gerarRoundRobin(times));
-  }
-
-  async function confirmarGeracao() {
-    setGerando(true);
-    try {
-      await api('/rodadas/liga-automatica', {
-        method: 'POST',
-        auth: true,
-        body: { rodadas: previa.map((confrontos) => ({ confrontos: confrontos.map((c) => ({ time_casa_id: c.casa.id, time_fora_id: c.fora.id })) })) },
-      });
-      avisar('Temporada gerada automaticamente!');
-      setPrevia(null);
-      recarregar();
-    } catch (erro) { avisar(erro.message, 'erro'); }
-    setGerando(false);
-  }
 
   const mudar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value });
 
@@ -634,17 +592,7 @@ function PainelRodadas({ times, rodadas, recarregar, avisar }) {
 
   return (
     <div>
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginBottom: 6 }}>Gerar temporada automaticamente</h3>
-        <p style={{ color: 'var(--fraco)', fontSize: 13, marginBottom: 14 }}>
-          Monta o turno único inteiro sozinho — todo time contra todo time uma vez, rodadas e jogos já criados juntos.
-          {rodadasLiga.length > 0 && ' Isso substitui as rodadas de liga atuais e os placares já lançados nelas.'}
-        </p>
-        <button type="button" className="btn" disabled={outraFase} onClick={abrirPrevia}>
-          <Shuffle className="i" />Gerar rodadas
-        </button>
-        {outraFase && <p style={{ color: 'var(--fraco)', fontSize: 12, marginTop: 8 }}>Remova a semifinal/final antes de regerar a liga.</p>}
-      </div>
+      <GeradorCalendario times={times} rodadas={rodadas} recarregar={recarregar} avisar={avisar} />
 
       <div className="admin-lista-topo">
         <div className="campo" style={{ position: 'relative' }}>
@@ -702,35 +650,6 @@ function PainelRodadas({ times, rodadas, recarregar, avisar }) {
         confirmando={removendo}
       />
 
-      <Modal aberto={!!previa} titulo="Revisar temporada gerada" onFechar={() => setPrevia(null)} largura={640}>
-        {previa && (
-          <div>
-            {rodadasLiga.length > 0 && (
-              <p className="aviso erro" style={{ marginBottom: 14 }}>
-                Isso vai apagar as {rodadasLiga.length} rodadas de liga atuais (e placares já lançados) e substituir pelo que está abaixo.
-              </p>
-            )}
-            <div style={{ display: 'grid', gap: 10, maxHeight: 380, overflowY: 'auto' }}>
-              {previa.map((confrontos, i) => (
-                <div key={i} className="item" style={{ display: 'block' }}>
-                  <strong style={{ fontSize: 13 }}>Rodada {i + 1}</strong>
-                  <div style={{ marginTop: 6, display: 'grid', gap: 4 }}>
-                    {confrontos.map((c, j) => (
-                      <small key={j} style={{ color: 'var(--suave)' }}>{c.casa.nome} × {c.fora.nome}</small>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-              <button className="btn" disabled={gerando} onClick={confirmarGeracao}>
-                {gerando ? 'Gerando…' : 'Confirmar e gerar'}
-              </button>
-              <button type="button" className="btn vazado" onClick={() => setPrevia(null)}>Cancelar</button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }
@@ -745,6 +664,7 @@ function PainelPartidas({ times, jogadores, rodadas, recarregar, avisar }) {
   const [remover, setRemover] = useState(null);
   const [removendo, setRemovendo] = useState(false);
   const [desempate, setDesempate] = useState(null);
+  const [cartoesAbertos, setCartoesAbertos] = useState(null);
 
   const mudar = (campo) => (e) => setForm({ ...form, [campo]: e.target.value });
 
@@ -757,6 +677,7 @@ function PainelPartidas({ times, jogadores, rodadas, recarregar, avisar }) {
       time_fora_id: p.time_fora_id,
       horario: p.horario ? p.horario.slice(0, 16) : '',
       status: p.status,
+      ordem: p.ordem ?? '',
     });
     setModalAberto(true);
   }
@@ -769,6 +690,7 @@ function PainelPartidas({ times, jogadores, rodadas, recarregar, avisar }) {
       time_fora_id: Number(form.time_fora_id),
       horario: form.horario || null,
       status: form.status,
+      ordem: form.ordem === '' ? null : Number(form.ordem),
     };
     try {
       if (editandoId) {
@@ -848,7 +770,7 @@ function PainelPartidas({ times, jogadores, rodadas, recarregar, avisar }) {
               <div className="info">
                 <strong>{p.casa_nome} × {p.fora_nome}</strong>
                 <small>
-                  {r.fase !== 'LIGA' ? r.nome : `Rodada ${r.numero}`} ·{' '}
+                  {r.fase !== 'LIGA' ? r.nome : `${r.numero}º sábado`}{p.ordem ? ` · Jogo ${p.ordem}` : ''} ·{' '}
                   {p.status === 'AO_VIVO' ? (
                     <span className="etiqueta viva" style={{ padding: '2px 8px', fontSize: 11 }}>
                       <span className="pulso" />Ao vivo {p.gols_casa ?? 0}–{p.gols_fora ?? 0}
@@ -891,10 +813,20 @@ function PainelPartidas({ times, jogadores, rodadas, recarregar, avisar }) {
                   </>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn vazado mini" onClick={() => setCartoesAbertos(cartoesAbertos === p.id ? null : p.id)}>Cartões</button>
                   <button className="btn vazado mini" onClick={() => abrirEdicao(r, p)}>Editar</button>
                   <button className="btn perigo mini" onClick={() => setRemover(p)}>Remover</button>
                 </div>
               </div>
+              {cartoesAbertos === p.id && (
+                <CartoesPartida
+                  partida={p}
+                  jogadoresCasa={jogadores.filter((j) => j.time_id === p.time_casa_id)}
+                  jogadoresFora={jogadores.filter((j) => j.time_id === p.time_fora_id)}
+                  avisar={avisar}
+                  recarregar={recarregar}
+                />
+              )}
             </div>
           ))
         )}
@@ -928,6 +860,7 @@ function PainelPartidas({ times, jogadores, rodadas, recarregar, avisar }) {
               {times.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
             </select>
           </div>
+          <div className="campo"><label>Ordem do jogo na rodada</label><input type="number" min="1" value={form.ordem} onChange={mudar('ordem')} placeholder="1, 2, 3…" /></div>
           <div className="campo"><label>Horário</label><input type="datetime-local" value={form.horario} onChange={mudar('horario')} /></div>
           <div className="campo">
             <label>Situação</label>
@@ -1107,211 +1040,5 @@ function ModalDesempate({ aberto, partida, onFechar, onConfirmar }) {
         </div>
       </form>
     </Modal>
-  );
-}
-
-/* -------------------------------- Mata-mata -------------------------------- */
-function vencedorDaPartida(p) {
-  if (p.status !== 'ENCERRADA') return null;
-  if (p.gols_casa > p.gols_fora) return p.time_casa_id;
-  if (p.gols_fora > p.gols_casa) return p.time_fora_id;
-  return p.vencedor_id ?? null;
-}
-
-function PainelMataMata({ rodadas, classificacao, recarregar, avisar }) {
-  const [pares, setPares] = useState(null);
-  const [enviando, setEnviando] = useState(false);
-
-  const semifinal = rodadas.find((r) => r.fase === 'SEMIFINAL');
-  const final = rodadas.find((r) => r.fase === 'FINAL');
-  const ultimaLiga = [...rodadas.filter((r) => r.fase === 'LIGA')].sort((a, b) => b.numero - a.numero)[0];
-  const top4 = classificacao.slice(0, 4);
-
-  const sugestao = top4.length === 4 ? [
-    { casa: top4[0], fora: top4[3] },
-    { casa: top4[1], fora: top4[2] },
-  ] : null;
-  const paresAtuais = pares ?? sugestao;
-
-  function jogaramNaUltimaRodada(aId, bId) {
-    return !!ultimaLiga?.partidas.some(
-      (p) => (p.time_casa_id === aId && p.time_fora_id === bId) || (p.time_casa_id === bId && p.time_fora_id === aId)
-    );
-  }
-
-  const conflito = !!(paresAtuais?.[0]?.casa && paresAtuais[0]?.fora && paresAtuais[1]?.casa && paresAtuais[1]?.fora &&
-    paresAtuais.some((par) => jogaramNaUltimaRodada(par.casa.time_id, par.fora.time_id)));
-
-  function trocarTime(indice, lado, timeId) {
-    const base = paresAtuais ?? [{ casa: null, fora: null }, { casa: null, fora: null }];
-    const novo = base.map((par) => ({ ...par }));
-    novo[indice][lado] = top4.find((t) => t.time_id === Number(timeId)) ?? null;
-    setPares(novo);
-  }
-
-  async function gerarSemifinal() {
-    if (!paresAtuais || paresAtuais.some((par) => !par.casa || !par.fora)) {
-      avisar('Defina os dois confrontos antes de gerar a semifinal.', 'erro');
-      return;
-    }
-    const idsUsados = paresAtuais.flatMap((p) => [p.casa.time_id, p.fora.time_id]);
-    if (new Set(idsUsados).size !== 4) {
-      avisar('Cada um dos 4 times só pode aparecer em um confronto.', 'erro');
-      return;
-    }
-    setEnviando(true);
-    try {
-      await api('/rodadas/mata-mata', {
-        method: 'POST',
-        auth: true,
-        body: {
-          fase: 'SEMIFINAL',
-          confrontos: paresAtuais.map((p) => ({ time_casa_id: p.casa.time_id, time_fora_id: p.fora.time_id })),
-        },
-      });
-      avisar('Semifinal gerada! Marque os jogos na aba "Partidas e placares".');
-      setPares(null);
-      recarregar();
-    } catch (erro) { avisar(erro.message, 'erro'); }
-    setEnviando(false);
-  }
-
-  const semisEncerradas = !!semifinal && semifinal.partidas.length === 2 && semifinal.partidas.every((p) => p.status === 'ENCERRADA');
-  const vencedoresSemifinal = semisEncerradas
-    ? semifinal.partidas.map((p) => {
-        const id = vencedorDaPartida(p);
-        return id === p.time_casa_id
-          ? { time_id: id, nome: p.casa_nome, cor: p.casa_cor, escudo_url: p.casa_escudo }
-          : { time_id: id, nome: p.fora_nome, cor: p.fora_cor, escudo_url: p.fora_escudo };
-      })
-    : null;
-
-  async function gerarFinal() {
-    setEnviando(true);
-    try {
-      await api('/rodadas/mata-mata', {
-        method: 'POST',
-        auth: true,
-        body: {
-          fase: 'FINAL',
-          confrontos: [{ time_casa_id: vencedoresSemifinal[0].time_id, time_fora_id: vencedoresSemifinal[1].time_id }],
-        },
-      });
-      avisar('Final gerada!');
-      recarregar();
-    } catch (erro) { avisar(erro.message, 'erro'); }
-    setEnviando(false);
-  }
-
-  const finalPartida = final?.partidas[0];
-  const campeaoId = finalPartida ? vencedorDaPartida(finalPartida) : null;
-  const campeao = campeaoId
-    ? (campeaoId === finalPartida.time_casa_id
-        ? { nome: finalPartida.casa_nome }
-        : { nome: finalPartida.fora_nome })
-    : null;
-
-  return (
-    <div>
-      {campeao && (
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, borderColor: 'var(--acento)' }}>
-          <Trophy style={{ width: 40, height: 40, color: 'var(--acento)' }} />
-          <div>
-            <small style={{ color: 'var(--fraco)' }}>Campeão da temporada</small>
-            <h2 style={{ fontSize: 24 }}>{campeao.nome}</h2>
-          </div>
-        </div>
-      )}
-
-      {!semifinal && (
-        <div className="card">
-          <h3 style={{ marginBottom: 6 }}>Gerar semifinal</h3>
-          {top4.length < 4 ? (
-            <p className="vazio">Precisa de pelo menos 4 times com jogos na classificação.</p>
-          ) : (
-            <>
-              <p style={{ color: 'var(--fraco)', fontSize: 13, marginBottom: 14 }}>
-                Top 4 da fase de liga: {top4.map((t, i) => `${i + 1}º ${t.nome}`).join(' · ')}
-              </p>
-              {conflito && (
-                <p className="aviso erro" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <AlertTriangle className="i" />
-                  Esse confronto repete o último jogo da liga. Ajuste os pares abaixo antes de confirmar.
-                </p>
-              )}
-              <div style={{ display: 'grid', gap: 12 }}>
-                {[0, 1].map((i) => (
-                  <div key={i} className="linha-campos" style={{ alignItems: 'center' }}>
-                    <div className="campo">
-                      <label>Confronto {i + 1} — mandante</label>
-                      <select value={paresAtuais[i].casa?.time_id ?? ''} onChange={(e) => trocarTime(i, 'casa', e.target.value)}>
-                        <option value="">Escolha o time</option>
-                        {top4.map((t) => <option key={t.time_id} value={t.time_id}>{t.nome}</option>)}
-                      </select>
-                    </div>
-                    <div className="campo">
-                      <label>Visitante</label>
-                      <select value={paresAtuais[i].fora?.time_id ?? ''} onChange={(e) => trocarTime(i, 'fora', e.target.value)}>
-                        <option value="">Escolha o time</option>
-                        {top4.map((t) => <option key={t.time_id} value={t.time_id}>{t.nome}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button className="btn" style={{ marginTop: 16 }} disabled={enviando} onClick={gerarSemifinal}>
-                <Shuffle className="i" />Confirmar e gerar semifinal
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {semifinal && (
-        <div className="card">
-          <h3 style={{ marginBottom: 6 }}>{final ? 'Semifinal' : 'Semifinal em andamento'}</h3>
-          <div className="lista" style={{ marginTop: 10 }}>
-            {semifinal.partidas.map((p) => (
-              <div key={p.id} className="item">
-                <div className="info">
-                  <strong>{p.casa_nome} × {p.fora_nome}</strong>
-                  <small>{p.status === 'ENCERRADA' ? `${p.gols_casa}–${p.gols_fora}${p.decisao === 'PENALTIS' ? ' (pênaltis)' : ''}` : p.status.toLowerCase()}</small>
-                </div>
-              </div>
-            ))}
-          </div>
-          {!final && !semisEncerradas && (
-            <p style={{ color: 'var(--fraco)', fontSize: 13, marginTop: 12 }}>
-              Marque os dois jogos na aba "Partidas e placares". A final aparece aqui assim que os dois forem encerrados.
-            </p>
-          )}
-          {!final && semisEncerradas && (
-            <>
-              <p style={{ marginTop: 14 }}>Final: <b>{vencedoresSemifinal[0].nome}</b> × <b>{vencedoresSemifinal[1].nome}</b></p>
-              <button className="btn" style={{ marginTop: 10 }} disabled={enviando} onClick={gerarFinal}>Gerar final</button>
-            </>
-          )}
-        </div>
-      )}
-
-      {final && (
-        <div className="card" style={{ marginTop: 20 }}>
-          <h3 style={{ marginBottom: 6 }}>Final</h3>
-          <div className="lista" style={{ marginTop: 10 }}>
-            <div className="item">
-              <div className="info">
-                <strong>{finalPartida.casa_nome} × {finalPartida.fora_nome}</strong>
-                <small>{finalPartida.status === 'ENCERRADA' ? `${finalPartida.gols_casa}–${finalPartida.gols_fora}${finalPartida.decisao === 'PENALTIS' ? ' (pênaltis)' : ''}` : finalPartida.status.toLowerCase()}</small>
-              </div>
-            </div>
-          </div>
-          {finalPartida.status !== 'ENCERRADA' && (
-            <p style={{ color: 'var(--fraco)', fontSize: 13, marginTop: 12 }}>
-              Marque o jogo na aba "Partidas e placares" pra definir o campeão.
-            </p>
-          )}
-        </div>
-      )}
-    </div>
   );
 }

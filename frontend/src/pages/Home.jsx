@@ -14,6 +14,7 @@ import CardJogo from '../components/CardJogo.jsx';
 import FotoPlaceholder from '../components/FotoPlaceholder.jsx';
 import FotoJogador from '../components/FotoJogador.jsx';
 import Patrocinador from '../components/Patrocinador.jsx';
+import GrandeFinal from '../components/GrandeFinal.jsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -295,7 +296,7 @@ export default function Home() {
 
       <section id="tabela" className="secao">
         <div className="secao-topo">
-          <div><h2><ListOrdered />Classificação</h2><p>Vitória 3 pontos · empate 1 · os quatro primeiros vão ao mata-mata</p></div>
+          <div><h2><ListOrdered />Classificação</h2><p>Vitória 3 pontos · empate 1 · os 2 primeiros vão para a Grande Final</p></div>
           <Link to="/classificacao" className="link">Tabela completa <ArrowRight className="i" /></Link>
         </div>
         <div className="tabela-rolagem">
@@ -307,7 +308,7 @@ export default function Home() {
               {tabela.map((linha, i) => {
                 const forma = formaDoTime(linha.time_id, partidasEncerradas).slice(0, 2);
                 return (
-                  <tr key={linha.time_id} className={i < 4 ? 'classificado' : undefined}>
+                  <tr key={linha.time_id} className={i < 2 ? 'classificado' : undefined}>
                     <td className="pos">{i + 1}</td>
                     <td className="time">
                       <Link to={`/times/${linha.slug}`}>
@@ -335,6 +336,8 @@ export default function Home() {
         </div>
         {tabela.length === 0 && <p className="vazio">A tabela aparece assim que o primeiro placar for lançado.</p>}
       </section>
+
+      <GrandeFinal />
 
       {patrocinadores.length > 0 && (
         <section className="secao patrocinadores">

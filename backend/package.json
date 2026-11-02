@@ -6,7 +6,8 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:setup": "node src/scripts/setup-db.js",
-    "admin:create": "node src/scripts/create-admin.js"
+    "admin:create": "node src/scripts/create-admin.js",
+    "test": "node --test"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

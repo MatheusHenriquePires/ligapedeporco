@@ -11,7 +11,7 @@ export default async function rotasPartidas(app) {
        JOIN rodadas r ON r.id = p.rodada_id
        JOIN times c ON c.id = p.time_casa_id
        JOIN times f ON f.id = p.time_fora_id
-       WHERE p.status <> 'ENCERRADA' ORDER BY p.horario NULLS LAST LIMIT 6`
+       WHERE p.status <> 'ENCERRADA' ORDER BY p.horario NULLS LAST, r.numero, p.ordem NULLS LAST, p.id LIMIT 6`
     )
   );
 
@@ -37,9 +37,10 @@ export default async function rotasPartidas(app) {
       return reply.code(400).send({ erro: 'Um time não pode jogar contra ele mesmo.' });
     }
     return one(
-      `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, gols_casa, gols_fora, horario, status)
-       VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,'AGENDADA')) RETURNING *`,
-      [b.rodada_id, b.time_casa_id, b.time_fora_id, b.gols_casa, b.gols_fora, b.horario, b.status]
+      `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, gols_casa, gols_fora, horario, status, ordem)
+       VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,'AGENDADA'),
+               COALESCE($8, (SELECT COALESCE(MAX(ordem),0)+1 FROM partidas WHERE rodada_id = $1))) RETURNING *`,
+      [b.rodada_id, b.time_casa_id, b.time_fora_id, b.gols_casa, b.gols_fora, b.horario, b.status, b.ordem]
     );
   });
 
@@ -48,9 +49,9 @@ export default async function rotasPartidas(app) {
     const partida = await one(
       `UPDATE partidas SET rodada_id=COALESCE($2,rodada_id), time_casa_id=COALESCE($3,time_casa_id),
               time_fora_id=COALESCE($4,time_fora_id), gols_casa=$5, gols_fora=$6,
-              horario=$7, status=COALESCE($8,status) WHERE id=$1 RETURNING *`,
+              horario=$7, status=COALESCE($8,status), ordem=COALESCE($9,ordem) WHERE id=$1 RETURNING *`,
       [request.params.id, b.rodada_id, b.time_casa_id, b.time_fora_id,
-       b.gols_casa, b.gols_fora, b.horario, b.status]
+       b.gols_casa, b.gols_fora, b.horario, b.status, b.ordem]
     );
     if (!partida) return reply.code(404).send({ erro: 'Partida não encontrada.' });
     return partida;
@@ -126,6 +127,56 @@ export default async function rotasPartidas(app) {
       [request.params.id, empatou ? vencedor_id : null, empatou ? decisao : null,
        empatou ? penaltis_casa : null, empatou ? penaltis_fora : null]
     );
+  });
+
+  /** Cartões disciplinares da partida (critério de desempate: menos cartões). */
+  app.get('/:id/cartoes', async (request) =>
+    query(
+      `SELECT c.id, c.time_id, c.jogador_id, c.tipo, c.criado_em, j.nome, j.apelido
+       FROM cartoes_partida c LEFT JOIN jogadores j ON j.id = c.jogador_id
+       WHERE c.partida_id = $1 ORDER BY c.criado_em`,
+      [request.params.id]
+    )
+  );
+
+  app.post('/:id/cartao', { preHandler: exigirAdmin }, async (request, reply) => {
+    const partida = await one('SELECT * FROM partidas WHERE id = $1', [request.params.id]);
+    if (!partida) return reply.code(404).send({ erro: 'Partida não encontrada.' });
+
+    const { jogador_id, time_id, tipo } = request.body ?? {};
+    if (!['AMARELO', 'VERMELHO'].includes(tipo)) {
+      return reply.code(400).send({ erro: 'O cartão precisa ser AMARELO ou VERMELHO.' });
+    }
+
+    let timeDoCartao = time_id ? Number(time_id) : null;
+    let jogador = null;
+    if (jogador_id) {
+      jogador = await one('SELECT * FROM jogadores WHERE id = $1', [jogador_id]);
+      if (!jogador) return reply.code(400).send({ erro: 'Jogador não encontrado.' });
+      timeDoCartao = jogador.time_id;
+    }
+    if (timeDoCartao !== partida.time_casa_id && timeDoCartao !== partida.time_fora_id) {
+      return reply.code(400).send({ erro: 'O cartão precisa ser de um dos dois times da partida.' });
+    }
+
+    const cartao = await one(
+      `INSERT INTO cartoes_partida (partida_id, time_id, jogador_id, tipo) VALUES ($1,$2,$3,$4) RETURNING *`,
+      [partida.id, timeDoCartao, jogador?.id ?? null, tipo]
+    );
+    if (jogador) await query('UPDATE jogadores SET cartoes = cartoes + 1 WHERE id = $1', [jogador.id]);
+    return cartao;
+  });
+
+  app.delete('/:id/cartao/:cartaoId', { preHandler: exigirAdmin }, async (request, reply) => {
+    const cartao = await one(
+      'DELETE FROM cartoes_partida WHERE id = $1 AND partida_id = $2 RETURNING *',
+      [request.params.cartaoId, request.params.id]
+    );
+    if (!cartao) return reply.code(404).send({ erro: 'Cartão não encontrado.' });
+    if (cartao.jogador_id) {
+      await query('UPDATE jogadores SET cartoes = GREATEST(cartoes - 1, 0) WHERE id = $1', [cartao.jogador_id]);
+    }
+    return reply.code(204).send();
   });
 
   app.get('/:id/gols', async (request) =>

@@ -20,7 +20,7 @@ export default function CardJogo({ jogo }) {
           {aoVivo ? 'Ao vivo' : encerrada ? 'Encerrada' : 'Agendada'}
         </span>
         <span className="rodada">
-          {jogo.rodada_fase && jogo.rodada_fase !== 'LIGA' ? jogo.rodada_nome : `Rodada ${jogo.rodada ?? jogo.rodada_numero ?? '—'}`}
+          {jogo.rodada_fase && jogo.rodada_fase !== 'LIGA' ? jogo.rodada_nome : `Rodada ${jogo.rodada ?? jogo.rodada_numero ?? '—'}`}{jogo.ordem ? ` · Jogo ${jogo.ordem}` : ''}
         </span>
       </div>
 

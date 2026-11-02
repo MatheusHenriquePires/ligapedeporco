@@ -1,5 +1,8 @@
 import { query, one, pool } from '../db.js';
 import { exigirAdmin } from '../auth.js';
+import { gerarCalendario, validarCalendario, TOTAL_JOGOS } from '../calendario.js';
+import { resolverFinalistas } from '../classificacao.js';
+import { tabelaClassificacao } from './classificacao.js';
 
 async function partidasDaRodada(rodadaId) {
   return query(
@@ -8,7 +11,7 @@ async function partidasDaRodada(rodadaId) {
      FROM partidas p
      JOIN times c ON c.id = p.time_casa_id
      JOIN times f ON f.id = p.time_fora_id
-     WHERE p.rodada_id = $1 ORDER BY p.horario NULLS LAST, p.id`,
+     WHERE p.rodada_id = $1 ORDER BY p.ordem NULLS LAST, p.horario NULLS LAST, p.id`,
     [rodadaId]
   );
 }
@@ -23,7 +26,7 @@ export default async function rotasRodadas(app) {
        JOIN times c ON c.id = p.time_casa_id
        JOIN times f ON f.id = p.time_fora_id
        WHERE p.rodada_id = ANY($1::int[])
-       ORDER BY p.horario NULLS LAST, p.id`,
+       ORDER BY p.ordem NULLS LAST, p.horario NULLS LAST, p.id`,
       [rodadas.map((r) => r.id)]
     );
     for (const rodada of rodadas) rodada.partidas = partidas.filter((p) => p.rodada_id === rodada.id);
@@ -63,85 +66,61 @@ export default async function rotasRodadas(app) {
     return reply.code(204).send();
   });
 
-  /** Cria a rodada de semifinal ou final já com os confrontos definidos pelo organizador. */
-  app.post('/mata-mata', { preHandler: exigirAdmin }, async (request, reply) => {
-    const { fase, confrontos } = request.body ?? {};
-    if (!['SEMIFINAL', 'FINAL'].includes(fase)) {
-      return reply.code(400).send({ erro: 'Fase precisa ser SEMIFINAL ou FINAL.' });
-    }
-    if (!Array.isArray(confrontos) || confrontos.length === 0) {
-      return reply.code(400).send({ erro: 'Informe ao menos um confronto.' });
-    }
-    if (fase === 'SEMIFINAL' && confrontos.length !== 2) {
-      return reply.code(400).send({ erro: 'A semifinal precisa de exatamente 2 confrontos.' });
-    }
-    if (fase === 'FINAL' && confrontos.length !== 1) {
-      return reply.code(400).send({ erro: 'A final precisa de exatamente 1 confronto.' });
-    }
-    const jaExiste = await one('SELECT id FROM rodadas WHERE fase = $1', [fase]);
-    if (jaExiste) return reply.code(400).send({ erro: `Já existe uma rodada de ${fase.toLowerCase()}.` });
-
-    const { max } = await one('SELECT COALESCE(MAX(numero),0) AS max FROM rodadas');
-    const nome = fase === 'SEMIFINAL' ? 'Semifinal' : 'Final';
-    const rodada = await one(
-      `INSERT INTO rodadas (numero, nome, status, fase) VALUES ($1,$2,'AGENDADA',$3) RETURNING *`,
-      [max + 1, nome, fase]
+  /** Confere o calendário da fase de liga (15 jogos, 4+4+4+3, dobras). Para o painel avisar de problemas. */
+  app.get('/liga/validacao', async () => {
+    const rodadas = await query("SELECT id, numero FROM rodadas WHERE fase = 'LIGA' ORDER BY numero");
+    const partidas = await query(
+      `SELECT p.rodada_id, p.ordem, p.time_casa_id, p.time_fora_id
+       FROM partidas p JOIN rodadas r ON r.id = p.rodada_id WHERE r.fase = 'LIGA'
+       ORDER BY p.ordem NULLS LAST, p.id`
     );
-
-    for (const c of confrontos) {
-      if (!c.time_casa_id || !c.time_fora_id) {
-        return reply.code(400).send({ erro: 'Cada confronto precisa dos dois times.' });
-      }
-      await query(
-        `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, status) VALUES ($1,$2,$3,'AGENDADA')`,
-        [rodada.id, c.time_casa_id, c.time_fora_id]
-      );
-    }
-
-    rodada.partidas = await partidasDaRodada(rodada.id);
-    return rodada;
+    return validarCalendario(rodadas.map((r) => ({
+      numero: r.numero,
+      jogos: partidas.filter((p) => p.rodada_id === r.id).map((p, i) => ({ ...p, ordem: p.ordem ?? i + 1 })),
+    })));
   });
 
   /**
-   * Gera a temporada de liga inteira de uma vez (turno único, todo mundo contra
-   * todo mundo), a partir dos confrontos já calculados no front. Substitui
-   * completamente as rodadas de fase LIGA existentes.
+   * Gera a fase de liga oficial: 15 jogos em 4 sábados (4+4+4+3) com as dobras.
+   * Corpo: { dobras?: [{a, b} x3], jogosA?, jogosB?, datas?: ['AAAA-MM-DD' x4], substituir?: true }
+   * Sem `dobras`, os times repetidos são sorteados. Se já existir calendário, exige `substituir: true`
+   * e só substitui se nenhum jogo tiver começado.
    */
-  app.post('/liga-automatica', { preHandler: exigirAdmin }, async (request, reply) => {
-    const { rodadas: rodadasNovas } = request.body ?? {};
-    if (!Array.isArray(rodadasNovas) || rodadasNovas.length === 0) {
-      return reply.code(400).send({ erro: 'Nada pra gerar — confira os times cadastrados.' });
+  app.post('/liga-calendario', { preHandler: exigirAdmin }, async (request, reply) => {
+    const { dobras, jogosA, jogosB, datas, substituir } = request.body ?? {};
+
+    if (await one("SELECT id FROM rodadas WHERE fase <> 'LIGA'")) {
+      return reply.code(400).send({ erro: 'Já existe a Grande Final. Remova-a antes de regerar a fase de liga.' });
+    }
+    const existentes = await query(
+      "SELECT p.status FROM partidas p JOIN rodadas r ON r.id = p.rodada_id WHERE r.fase = 'LIGA'"
+    );
+    if (existentes.length > 0 && !substituir) {
+      return reply.code(409).send({ erro: 'Já existe um calendário. Confirme para substituir.', requerConfirmacao: true });
+    }
+    if (existentes.some((p) => p.status !== 'AGENDADA')) {
+      return reply.code(400).send({ erro: 'Há jogos iniciados ou encerrados. Para não perder resultados, ajuste o calendário manualmente.' });
     }
 
-    const outraFase = await one("SELECT id FROM rodadas WHERE fase <> 'LIGA'");
-    if (outraFase) {
-      return reply.code(400).send({ erro: 'Remova a semifinal/final antes de regerar a fase de liga.' });
-    }
+    const times = await query('SELECT id FROM times ORDER BY id');
+    const calendario = gerarCalendario(times.map((t) => t.id), { dobras, jogosA, jogosB });
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       await client.query("DELETE FROM rodadas WHERE fase = 'LIGA'");
-
-      for (let i = 0; i < rodadasNovas.length; i++) {
-        const confrontos = rodadasNovas[i]?.confrontos ?? [];
-        if (!confrontos.length) continue;
-
-        const { rows: [rodada] } = await client.query(
-          `INSERT INTO rodadas (numero, status, fase) VALUES ($1,'AGENDADA','LIGA') RETURNING id`,
-          [i + 1]
+      for (const rodada of calendario.rodadas) {
+        const { rows: [nova] } = await client.query(
+          `INSERT INTO rodadas (numero, nome, data, status, fase) VALUES ($1,$2,$3,'AGENDADA','LIGA') RETURNING id`,
+          [rodada.numero, `${rodada.numero}º sábado`, datas?.[rodada.numero - 1] || null]
         );
-        for (const c of confrontos) {
-          if (!c.time_casa_id || !c.time_fora_id) {
-            throw Object.assign(new Error('Confronto inválido na rodada ' + (i + 1) + '.'), { statusCode: 400 });
-          }
+        for (const j of rodada.jogos) {
           await client.query(
-            `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, status) VALUES ($1,$2,$3,'AGENDADA')`,
-            [rodada.id, c.time_casa_id, c.time_fora_id]
+            `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, ordem, status) VALUES ($1,$2,$3,$4,'AGENDADA')`,
+            [nova.id, j.time_casa_id, j.time_fora_id, j.ordem]
           );
         }
       }
-
       await client.query('COMMIT');
     } catch (erro) {
       await client.query('ROLLBACK');
@@ -154,10 +133,74 @@ export default async function rotasRodadas(app) {
     const partidas = await query(
       `SELECT p.*, c.nome AS casa_nome, f.nome AS fora_nome
        FROM partidas p JOIN times c ON c.id = p.time_casa_id JOIN times f ON f.id = p.time_fora_id
-       WHERE p.rodada_id = ANY($1::int[])`,
+       WHERE p.rodada_id = ANY($1::int[]) ORDER BY p.ordem, p.id`,
       [rodadas.map((r) => r.id)]
     );
     for (const rodada of rodadas) rodada.partidas = partidas.filter((p) => p.rodada_id === rodada.id);
-    return rodadas;
+    return { dobras: calendario.dobras, rodadas, validacao: validarCalendario(calendario.rodadas) };
+  });
+
+  /** Situação da Grande Final: progresso da liga, partida da final e o Grande Campeão. */
+  app.get('/final-geral', async () => {
+    const [{ total, encerradas }] = await query(
+      `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE p.status = 'ENCERRADA')::int AS encerradas
+       FROM partidas p JOIN rodadas r ON r.id = p.rodada_id WHERE r.fase = 'LIGA'`
+    );
+    const rodada = await one("SELECT * FROM rodadas WHERE fase = 'FINAL'");
+    const resposta = { liga: { total, encerradas, completa: total === TOTAL_JOGOS && encerradas === total }, rodada: null, partida: null, campeao: null };
+    if (!rodada) return resposta;
+
+    const partida = await one(
+      `SELECT p.*, c.nome AS casa_nome, c.slug AS casa_slug, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
+              f.nome AS fora_nome, f.slug AS fora_slug, f.cor AS fora_cor, f.escudo_url AS fora_escudo
+       FROM partidas p JOIN times c ON c.id = p.time_casa_id JOIN times f ON f.id = p.time_fora_id
+       WHERE p.rodada_id = $1 ORDER BY p.ordem, p.id LIMIT 1`,
+      [rodada.id]
+    );
+    resposta.rodada = rodada;
+    resposta.partida = partida;
+
+    if (partida?.status === 'ENCERRADA') {
+      let campeaoId = null;
+      if (partida.gols_casa > partida.gols_fora) campeaoId = partida.time_casa_id;
+      else if (partida.gols_casa < partida.gols_fora) campeaoId = partida.time_fora_id;
+      else campeaoId = partida.vencedor_id;
+      if (campeaoId) {
+        resposta.campeao = await one('SELECT id, nome, slug, cor, escudo_url FROM times WHERE id = $1', [campeaoId]);
+      }
+    }
+    return resposta;
+  });
+
+  /**
+   * Cria a Grande Final (1º x 2º da fase de liga). Só com os 15 jogos da liga encerrados
+   * e sem empate total pendente nas duas primeiras posições.
+   */
+  app.post('/final-geral', { preHandler: exigirAdmin }, async (request, reply) => {
+    if (await one("SELECT id FROM rodadas WHERE fase = 'FINAL'")) {
+      return reply.code(400).send({ erro: 'A Grande Final já foi criada.' });
+    }
+    const [{ total, encerradas }] = await query(
+      `SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE p.status = 'ENCERRADA')::int AS encerradas
+       FROM partidas p JOIN rodadas r ON r.id = p.rodada_id WHERE r.fase = 'LIGA'`
+    );
+    if (total !== TOTAL_JOGOS || encerradas !== total) {
+      return reply.code(400).send({ erro: `A Grande Final só pode ser criada com os ${TOTAL_JOGOS} jogos da fase de liga encerrados (${encerradas} de ${TOTAL_JOGOS}).` });
+    }
+
+    const finalistas = resolverFinalistas(await tabelaClassificacao());
+    if (!finalistas.ok) return reply.code(400).send({ erro: finalistas.motivo });
+
+    const { max } = await one('SELECT COALESCE(MAX(numero),0) AS max FROM rodadas');
+    const rodada = await one(
+      `INSERT INTO rodadas (numero, nome, status, fase) VALUES ($1,'Grande Final','AGENDADA','FINAL') RETURNING *`,
+      [max + 1]
+    );
+    await query(
+      `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, ordem, status) VALUES ($1,$2,$3,1,'AGENDADA')`,
+      [rodada.id, finalistas.primeiro.time_id, finalistas.segundo.time_id]
+    );
+    rodada.partidas = await partidasDaRodada(rodada.id);
+    return rodada;
   });
 }
