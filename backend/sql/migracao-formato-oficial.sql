@@ -23,3 +23,10 @@ CREATE TABLE IF NOT EXISTS cartoes_partida (
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_cartoes_partida_partida ON cartoes_partida(partida_id);
+
+-- Configuracoes simples (ex.: data da Grande Final)
+CREATE TABLE IF NOT EXISTS configuracoes (
+  chave         TEXT PRIMARY KEY,
+  valor         TEXT
+);
+INSERT INTO configuracoes (chave, valor) VALUES ('final_data', '2026-12-14') ON CONFLICT (chave) DO NOTHING;

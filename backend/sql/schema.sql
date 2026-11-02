@@ -1,4 +1,5 @@
 -- Liga Pé de Porco :: esquema do banco
+DROP TABLE IF EXISTS configuracoes CASCADE;
 DROP TABLE IF EXISTS cartoes_partida CASCADE;
 DROP TABLE IF EXISTS gols_partida CASCADE;
 DROP TABLE IF EXISTS partidas CASCADE;
@@ -135,3 +136,10 @@ CREATE TABLE IF NOT EXISTS patrocinadores (
   ordem         INTEGER NOT NULL DEFAULT 0,
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Configuracoes simples (ex.: data da Grande Final)
+CREATE TABLE IF NOT EXISTS configuracoes (
+  chave         TEXT PRIMARY KEY,
+  valor         TEXT
+);
+INSERT INTO configuracoes (chave, valor) VALUES ('final_data', '2026-12-14') ON CONFLICT (chave) DO NOTHING;

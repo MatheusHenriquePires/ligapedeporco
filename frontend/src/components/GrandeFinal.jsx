@@ -9,6 +9,9 @@ const formatarData = (iso) =>
     ? new Date(iso).toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })
     : 'Data a definir';
 
+const formatarDia = (data) =>
+  data ? new Date(data.slice(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) : null;
+
 /** Grande Final (1º x 2º da fase de liga) e o Grande Campeão. */
 export default function GrandeFinal() {
   const [dados, setDados] = useState(null);
@@ -19,6 +22,7 @@ export default function GrandeFinal() {
 
   if (!dados) return null;
   const { liga, partida, campeao } = dados;
+  const dia = formatarDia(partida?.horario ? null : (dados.rodada?.data ?? dados.data));
   const encerrada = partida?.status === 'ENCERRADA';
   const aoVivo = partida?.status === 'AO_VIVO';
   const placar = (gols) => (encerrada || aoVivo ? gols ?? 0 : '–');
@@ -26,7 +30,7 @@ export default function GrandeFinal() {
   return (
     <section className="secao grande-final">
       <div className="secao-topo">
-        <div><h2><Trophy />Grande Final</h2><p>1º x 2º colocado da fase de liga · jogo único</p></div>
+        <div><h2><Trophy />Grande Final</h2><p>1º x 2º colocado da fase de liga · jogo único{formatarDia(dados.rodada?.data ?? dados.data) ? ` · ${formatarDia(dados.rodada?.data ?? dados.data)}` : ''}</p></div>
         {liga && <span className="etiqueta fria">Fase de liga: {liga.encerradas} de {liga.total || 15} jogos</span>}
       </div>
 
@@ -54,7 +58,7 @@ export default function GrandeFinal() {
             </div>
             <span className={`etiqueta ${aoVivo ? 'viva' : 'fria'}`}>
               {aoVivo && <span className="pulso" />}
-              {aoVivo ? 'Ao vivo' : encerrada ? 'Encerrada' : formatarData(partida.horario)}
+              {aoVivo ? 'Ao vivo' : encerrada ? 'Encerrada' : partida.horario ? formatarData(partida.horario) : (dia ?? 'Data a definir')}
             </span>
             {encerrada && partida.decisao === 'PENALTIS' && (
               <small>Pênaltis: {partida.penaltis_casa} × {partida.penaltis_fora}</small>
@@ -70,7 +74,7 @@ export default function GrandeFinal() {
         <p className="vazio">
           {liga?.completa
             ? 'Fase de liga concluída. A Grande Final será definida em breve.'
-            : 'A Grande Final será entre o 1º e o 2º colocado, assim que a fase de liga terminar.'}
+            : `A Grande Final será entre o 1º e o 2º colocado, assim que a fase de liga terminar${dia ? `, em ${dia}` : ''}.`}
         </p>
       )}
     </section>

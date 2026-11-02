@@ -329,12 +329,25 @@ export function PainelDesempate({ classificacao, recarregar, avisar }) {
 export function PainelGrandeFinal({ classificacao, recarregar, avisar }) {
   const [dados, setDados] = useState(null);
   const [enviando, setEnviando] = useState(false);
+  const [dataFinal, setDataFinal] = useState('');
 
   const carregar = useCallback(async () => {
-    try { setDados(await api('/rodadas/final-geral')); } catch { /* silencioso */ }
+    try {
+      const d = await api('/rodadas/final-geral');
+      setDados(d);
+      setDataFinal((d.rodada?.data ?? d.data ?? '').slice(0, 10));
+    } catch { /* silencioso */ }
   }, []);
 
   useEffect(() => { carregar(); }, [carregar, classificacao]);
+
+  async function salvarData() {
+    try {
+      await api('/rodadas/final-geral/data', { method: 'PUT', auth: true, body: { data: dataFinal } });
+      avisar('Data da Grande Final salva.');
+      carregar();
+    } catch (erro) { avisar(erro.message, 'erro'); }
+  }
 
   async function gerar() {
     setEnviando(true);
@@ -369,6 +382,16 @@ export function PainelGrandeFinal({ classificacao, recarregar, avisar }) {
         <p style={{ color: 'var(--fraco)', fontSize: 13, marginBottom: 14 }}>
           Jogo único: 1º x 2º colocado da fase de liga. Fase de liga: <b>{liga.encerradas} de {liga.total || 15}</b> jogos encerrados.
         </p>
+
+        <div className="linha-campos" style={{ alignItems: 'flex-end', marginBottom: 14 }}>
+          <div className="campo">
+            <label>Data da Grande Final</label>
+            <input type="date" value={dataFinal} onChange={(e) => setDataFinal(e.target.value)} />
+          </div>
+          <div className="campo">
+            <button type="button" className="btn vazado" onClick={salvarData} disabled={!dataFinal}>Salvar data</button>
+          </div>
+        </div>
 
         {!partida && (
           <>

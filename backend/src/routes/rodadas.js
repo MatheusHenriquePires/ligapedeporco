@@ -16,6 +16,12 @@ async function partidasDaRodada(rodadaId) {
   );
 }
 
+/** Data da Grande Final (configuração editável no painel, padrão 2026-12-14). */
+async function dataDaFinal() {
+  const linha = await one("SELECT valor FROM configuracoes WHERE chave = 'final_data'");
+  return linha?.valor ?? null;
+}
+
 export default async function rotasRodadas(app) {
   app.get('/', async () => {
     const rodadas = await query('SELECT * FROM rodadas ORDER BY numero');
@@ -147,7 +153,7 @@ export default async function rotasRodadas(app) {
        FROM partidas p JOIN rodadas r ON r.id = p.rodada_id WHERE r.fase = 'LIGA'`
     );
     const rodada = await one("SELECT * FROM rodadas WHERE fase = 'FINAL'");
-    const resposta = { liga: { total, encerradas, completa: total === TOTAL_JOGOS && encerradas === total }, rodada: null, partida: null, campeao: null };
+    const resposta = { data: await dataDaFinal(), liga: { total, encerradas, completa: total === TOTAL_JOGOS && encerradas === total }, rodada: null, partida: null, campeao: null };
     if (!rodada) return resposta;
 
     const partida = await one(
@@ -172,6 +178,21 @@ export default async function rotasRodadas(app) {
     return resposta;
   });
 
+  /** Define a data da Grande Final (AAAA-MM-DD). Se a final já existir, atualiza a rodada dela. */
+  app.put('/final-geral/data', { preHandler: exigirAdmin }, async (request, reply) => {
+    const { data } = request.body ?? {};
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data ?? '') || Number.isNaN(Date.parse(data))) {
+      return reply.code(400).send({ erro: 'Informe a data no formato AAAA-MM-DD.' });
+    }
+    await query(
+      `INSERT INTO configuracoes (chave, valor) VALUES ('final_data', $1)
+       ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
+      [data]
+    );
+    await query("UPDATE rodadas SET data = $1 WHERE fase = 'FINAL'", [data]);
+    return { data };
+  });
+
   /**
    * Cria a Grande Final (1º x 2º da fase de liga). Só com os 15 jogos da liga encerrados
    * e sem empate total pendente nas duas primeiras posições.
@@ -193,8 +214,8 @@ export default async function rotasRodadas(app) {
 
     const { max } = await one('SELECT COALESCE(MAX(numero),0) AS max FROM rodadas');
     const rodada = await one(
-      `INSERT INTO rodadas (numero, nome, status, fase) VALUES ($1,'Grande Final','AGENDADA','FINAL') RETURNING *`,
-      [max + 1]
+      `INSERT INTO rodadas (numero, nome, data, status, fase) VALUES ($1,'Grande Final',$2,'AGENDADA','FINAL') RETURNING *`,
+      [max + 1, await dataDaFinal()]
     );
     await query(
       `INSERT INTO partidas (rodada_id, time_casa_id, time_fora_id, ordem, status) VALUES ($1,$2,$3,1,'AGENDADA')`,

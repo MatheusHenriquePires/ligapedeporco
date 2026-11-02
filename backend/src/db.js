@@ -46,7 +46,12 @@ CREATE TABLE IF NOT EXISTS cartoes_partida (
   tipo          TEXT NOT NULL CHECK (tipo IN ('AMARELO','VERMELHO')),
   criado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_cartoes_partida_partida ON cartoes_partida(partida_id);`;
+CREATE INDEX IF NOT EXISTS idx_cartoes_partida_partida ON cartoes_partida(partida_id);
+CREATE TABLE IF NOT EXISTS configuracoes (
+  chave         TEXT PRIMARY KEY,
+  valor         TEXT
+);
+INSERT INTO configuracoes (chave, valor) VALUES ('final_data', '2026-12-14') ON CONFLICT (chave) DO NOTHING;`;
 
 // Cria tabelas adicionadas depois do primeiro setup, sem apagar nada.
 export async function garantirTabelas() {

@@ -154,7 +154,7 @@ export default function Home() {
                 {aoVivo ? 'Ao vivo' : 'Próximo jogo'}
               </span>
               <span className="live-loc"><Clock className="i" />
-                {aoVivo ? rotuloRodada(destaque) : new Date(destaque.horario).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                {aoVivo ? rotuloRodada(destaque) : destaque.horario ? new Date(destaque.horario).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Data a definir'}
               </span>
             </div>
             <div className="placar">
@@ -170,7 +170,7 @@ export default function Home() {
                 <h3>{destaque.fora_nome}</h3>
               </div>
             </div>
-            <div className="min"><span>{rotuloRodada(destaque)}</span><span>{destaque.status === 'AGENDADA' ? 'Agendada' : destaque.status}</span></div>
+            <div className="min"><span>{rotuloRodada(destaque)}{destaque.ordem ? ` · Jogo ${destaque.ordem}` : ''}</span><span>·</span><span>{destaque.status === 'AGENDADA' ? 'Agendada' : destaque.status}</span></div>
           </div>
         )}
       </header>
