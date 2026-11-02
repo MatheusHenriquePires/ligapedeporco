@@ -154,7 +154,7 @@ export default function Home() {
                 {aoVivo ? 'Ao vivo' : 'Próximo jogo'}
               </span>
               <span className="live-loc"><Clock className="i" />
-                {aoVivo ? rotuloRodada(destaque) : destaque.horario ? new Date(destaque.horario).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Data a definir'}
+                {aoVivo ? rotuloRodada(destaque) : destaque.horario ? new Date(destaque.horario).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : destaque.rodada_data ? new Date(destaque.rodada_data.slice(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }) : 'Data a definir'}
               </span>
             </div>
             <div className="placar">

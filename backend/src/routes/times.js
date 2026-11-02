@@ -23,7 +23,7 @@ export default async function rotasTimes(app) {
         [time.id]
       ),
       query(
-        `SELECT p.*, r.numero AS rodada, r.nome AS rodada_nome, r.fase AS rodada_fase,
+        `SELECT p.*, r.numero AS rodada, r.nome AS rodada_nome, r.fase AS rodada_fase, r.data AS rodada_data,
                 c.nome AS casa, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
                 f.nome AS fora, f.cor AS fora_cor, f.escudo_url AS fora_escudo
          FROM partidas p

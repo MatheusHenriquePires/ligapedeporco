@@ -6,6 +6,12 @@ const formatarData = (iso) =>
     ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
     : 'Data a definir';
 
+const formatarDiaRodada = (data) =>
+  new Date(data.slice(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+const quando = (jogo) =>
+  jogo.horario ? formatarData(jogo.horario) : jogo.rodada_data ? formatarDiaRodada(jogo.rodada_data) : 'Data a definir';
+
 export default function CardJogo({ jogo }) {
   const encerrada = jogo.status === 'ENCERRADA';
   const aoVivo = jogo.status === 'AO_VIVO';
@@ -36,7 +42,7 @@ export default function CardJogo({ jogo }) {
         <span className="gols">{encerrada || aoVivo ? jogo.gols_fora ?? 0 : '–'}</span>
       </div>
 
-      <div className="horario"><Clock className="i" />{formatarData(jogo.horario)}</div>
+      <div className="horario"><Clock className="i" />{quando(jogo)}</div>
     </article>
   );
 }

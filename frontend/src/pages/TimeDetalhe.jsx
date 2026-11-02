@@ -17,6 +17,8 @@ function dataLonga(iso) {
   const d = new Date(iso).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   return d.charAt(0).toUpperCase() + d.slice(1);
 }
+const diaCurto = (data) =>
+  new Date(data.slice(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
 const horaCurta = (iso) => (iso
   ? new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' -')
   : '--');
@@ -106,10 +108,10 @@ export default function TimeDetalhe() {
             {proximos.map((p) => (
               <article key={p.id} className="tm-jogo">
                 <header>
-                  <strong>{dataLonga(p.horario)}</strong>
+                  <strong>{dataLonga(p.horario ?? (p.rodada_data ? p.rodada_data.slice(0, 10) + 'T12:00:00' : null))}</strong>
                   <span className="tm-chip">{p.rodada_fase && p.rodada_fase !== 'LIGA' ? p.rodada_nome : `Rodada ${p.rodada}`}</span>
                 </header>
-                <small>{horaCurta(p.horario)}</small>
+                <small>{p.horario ? horaCurta(p.horario) : p.rodada_data ? diaCurto(p.rodada_data) : '--'}</small>
                 {[['casa', p.time_casa_id, p.gols_casa], ['fora', p.time_fora_id, p.gols_fora]].map(([lado, id, gols]) => (
                   <div key={lado} className={`tm-jogo-linha${id === time.id ? ' meu' : ''}`}>
                     <b>{sigla(p[lado])}</b>

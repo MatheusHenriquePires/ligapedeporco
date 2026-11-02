@@ -61,7 +61,7 @@ export default function Rodadas() {
             {rodada.partidas.length ? (
               <div className="grade jogos">
                 {rodada.partidas.map((p) => (
-                  <CardJogo key={p.id} jogo={{ ...p, rodada: rodada.numero, rodada_fase: rodada.fase, rodada_nome: rodada.nome }} />
+                  <CardJogo key={p.id} jogo={{ ...p, rodada: rodada.numero, rodada_fase: rodada.fase, rodada_nome: rodada.nome, rodada_data: rodada.data }} />
                 ))}
               </div>
             ) : (

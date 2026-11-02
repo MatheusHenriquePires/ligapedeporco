@@ -4,7 +4,7 @@ import { exigirAdmin } from '../auth.js';
 export default async function rotasPartidas(app) {
   app.get('/proximas', async () =>
     query(
-      `SELECT p.*, r.numero AS rodada, r.fase AS rodada_fase, r.nome AS rodada_nome,
+      `SELECT p.*, r.numero AS rodada, r.fase AS rodada_fase, r.nome AS rodada_nome, r.data AS rodada_data,
               c.nome AS casa_nome, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
               f.nome AS fora_nome, f.cor AS fora_cor, f.escudo_url AS fora_escudo
        FROM partidas p
@@ -17,7 +17,7 @@ export default async function rotasPartidas(app) {
 
   app.get('/ultimos-resultados', async () =>
     query(
-      `SELECT p.*, r.numero AS rodada, r.fase AS rodada_fase, r.nome AS rodada_nome,
+      `SELECT p.*, r.numero AS rodada, r.fase AS rodada_fase, r.nome AS rodada_nome, r.data AS rodada_data,
               c.nome AS casa_nome, c.cor AS casa_cor, c.escudo_url AS casa_escudo,
               f.nome AS fora_nome, f.cor AS fora_cor, f.escudo_url AS fora_escudo
        FROM partidas p
