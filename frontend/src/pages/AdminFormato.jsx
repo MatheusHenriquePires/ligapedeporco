@@ -15,11 +15,19 @@ const sorteio = (lista) => {
 
 const DOBRAS_VAZIAS = [{ a: '', b: '' }, { a: '', b: '' }, { a: '', b: '' }];
 
+// Quem joga duas vezes nunca joga partidas seguidas.
+const PADROES = [
+  { id: '1-4|2-4', jogosA: [1, 4], jogosB: [2, 4], rotulo: 'A: 1º e 4º jogo · B: 2º e 4º jogo (A e B se enfrentam no último)' },
+  { id: '1-4|1-3', jogosA: [1, 4], jogosB: [1, 3], rotulo: 'A: 1º e 4º jogo · B: 1º e 3º jogo (A e B se enfrentam no primeiro)' },
+  { id: '1-3|2-4', jogosA: [1, 3], jogosB: [2, 4], rotulo: 'A: 1º e 3º jogo · B: 2º e 4º jogo' },
+];
+
 /* ----------------------- Gerar calendário oficial (4+4+4+3) ----------------------- */
 export function GeradorCalendario({ times, rodadas, recarregar, avisar }) {
   const [aberto, setAberto] = useState(false);
   const [dobras, setDobras] = useState(DOBRAS_VAZIAS);
   const [datas, setDatas] = useState(['', '', '', '']);
+  const [padrao, setPadrao] = useState(PADROES[0].id);
   const [enviando, setEnviando] = useState(false);
   const [confirmarSubstituir, setConfirmarSubstituir] = useState(false);
   const [validacao, setValidacao] = useState(null);
@@ -53,12 +61,15 @@ export function GeradorCalendario({ times, rodadas, recarregar, avisar }) {
 
   async function gerar(substituir) {
     setEnviando(true);
+    const escolhido = PADROES.find((p) => p.id === padrao) ?? PADROES[0];
     try {
       await api('/rodadas/liga-calendario', {
         method: 'POST',
         auth: true,
         body: {
           dobras: dobras.map((d) => ({ a: Number(d.a), b: Number(d.b) })),
+          jogosA: escolhido.jogosA,
+          jogosB: escolhido.jogosB,
           datas: datas.map((d) => d || null),
           substituir,
         },
@@ -78,8 +89,8 @@ export function GeradorCalendario({ times, rodadas, recarregar, avisar }) {
     <div className="card" style={{ marginBottom: 20 }}>
       <h3 style={{ marginBottom: 6 }}>Calendário oficial da fase de liga</h3>
       <p style={{ color: 'var(--fraco)', fontSize: 13, marginBottom: 14 }}>
-        15 jogos em 4 sábados (4 + 4 + 4 + 3). Nos sábados 1 a 3, o time A joga o 1º e o último jogo e o time B joga os dois do meio.
-        Cada time repete exatamente uma vez. Você pode sortear ou escolher quem repete, e editar os jogos depois.
+        15 jogos em 4 sábados (4 + 4 + 4 + 3). Nos sábados 1 a 3, dois times jogam duas vezes, nunca em jogos seguidos.
+        Cada time repete exatamente uma vez. Você pode sortear ou escolher quem repete e o padrão de jogos, e editar os jogos depois.
       </p>
 
       {validacao && (validacao.erros.length > 0 || validacao.avisos.length > 0) && (
@@ -102,17 +113,23 @@ export function GeradorCalendario({ times, rodadas, recarregar, avisar }) {
           <p style={{ color: 'var(--fraco)', fontSize: 13 }}>
             Quem joga duas vezes em cada sábado. Os 6 times precisam aparecer uma única vez.
           </p>
+          <div className="campo">
+            <label>Jogos de quem repete (nunca seguidos)</label>
+            <select value={padrao} onChange={(e) => setPadrao(e.target.value)}>
+              {PADROES.map((p) => <option key={p.id} value={p.id}>{p.rotulo}</option>)}
+            </select>
+          </div>
           {dobras.map((d, i) => (
             <div key={i} className="linha-campos">
               <div className="campo">
-                <label>{i + 1}º sábado — time A (1º e último jogo)</label>
+                <label>{i + 1}º sábado — time A</label>
                 <select value={d.a} onChange={(e) => trocar(i, 'a', e.target.value)}>
                   <option value="">Escolha o time</option>
                   {times.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
                 </select>
               </div>
               <div className="campo">
-                <label>Time B (2º e 3º jogo)</label>
+                <label>Time B</label>
                 <select value={d.b} onChange={(e) => trocar(i, 'b', e.target.value)}>
                   <option value="">Escolha o time</option>
                   {times.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}

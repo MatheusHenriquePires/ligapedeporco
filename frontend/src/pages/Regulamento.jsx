@@ -41,7 +41,7 @@ export default function Regulamento() {
               <div key={s.n}><strong>{s.jogos}</strong><span>jogos</span><small>{s.n}</small></div>
             ))}
           </div>
-          <p className="reg-nota">Em cada sábado de 4 jogos, dois times jogam duas partidas no mesmo dia. Ao longo da liga, cada time repete uma vez. No 4º sábado todos jogam uma vez.</p>
+          <p className="reg-nota">Em cada sábado de 4 jogos, dois times jogam duas partidas no mesmo dia, nunca em jogos seguidos. Ao longo da liga, cada time repete uma vez. No 4º sábado todos jogam uma vez.</p>
         </article>
 
         <article className="reg-bloco">

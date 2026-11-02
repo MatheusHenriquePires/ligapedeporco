@@ -1,8 +1,9 @@
 // Gerador e validador do calendário da fase de liga (6 times, turno único).
 //
 // Estrutura oficial: 15 jogos em 4 sábados (4 + 4 + 4 + 3).
-// Sábados 1 a 3: dois times jogam duas vezes no mesmo dia. O time A joga o 1º e o último
-// jogo da rodada; o time B joga os dois do meio (configurável em `jogosA` / `jogosB`).
+// Sábados 1 a 3: dois times jogam duas vezes no mesmo dia, nunca em jogos seguidos.
+// Padrão: o time A joga o 1º e o último jogo; o time B joga o 2º e o último (por isso A e B
+// se enfrentam no último jogo). Configurável em `jogosA` / `jogosB` (1º e 3º, 1º e 4º ou 2º e 4º).
 // Sábado 4: 3 jogos, todos os times jogam uma vez.
 // Cada time dobra exatamente uma vez nos sábados 1 a 3. Nenhum confronto se repete.
 
@@ -33,10 +34,13 @@ function permutacoes(lista) {
     permutacoes([...lista.slice(0, i), ...lista.slice(i + 1)]).map((p) => [x, ...p]));
 }
 
+// Ninguém joga duas partidas seguidas: os dois jogos de quem repete precisam ter
+// pelo menos um jogo de intervalo (1º e 3º, 1º e 4º ou 2º e 4º).
 function validarPosicoes(jogosA, jogosB) {
-  const ok = (v) => Array.isArray(v) && v.length === 2 && v[0] !== v[1] && v.every((n) => Number.isInteger(n) && n >= 1 && n <= 4);
-  if (!ok(jogosA) || !ok(jogosB) || jogosA.some((n) => jogosB.includes(n))) {
-    throw new ErroCalendario('As posições dos jogos do time A e do time B precisam ser 2 números diferentes entre 1 e 4, sem repetir entre os dois.');
+  const ok = (v) => Array.isArray(v) && v.length === 2 && v.every((n) => Number.isInteger(n) && n >= 1 && n <= 4) && Math.abs(v[0] - v[1]) >= 2;
+  const iguais = ok(jogosA) && ok(jogosB) && [...jogosA].sort().join() === [...jogosB].sort().join();
+  if (!ok(jogosA) || !ok(jogosB) || iguais) {
+    throw new ErroCalendario('Quem joga duas vezes não pode jogar partidas seguidas: use o 1º e 3º, o 1º e 4º ou o 2º e 4º jogo. Os dois times também não podem ter exatamente os mesmos jogos.');
   }
 }
 
@@ -81,20 +85,21 @@ function buscar(timeIds, dobras, jogosA, jogosB, rand) {
     const { a, b } = dobras[r];
     const outros = timeIds.filter((id) => id !== a && id !== b);
     for (const p of embaralhar(permutacoes(outros), rand)) {
-      const pares = [[a, p[0], jogosA[0]], [a, p[1], jogosA[1]], [b, p[2], jogosB[0]], [b, p[3], jogosB[1]]];
-      if (pares.some(([x, y]) => usados.has(chave(x, y)))) continue;
-      const novos = new Set(usados);
-      pares.forEach(([x, y]) => novos.add(chave(x, y)));
+      // monta os 4 jogos do dia: A e B nas posições definidas e os outros 4 times nas vagas que sobram
+      const dia = [[], [], [], []];
+      for (const pos of jogosA) dia[pos - 1].push(a);
+      for (const pos of jogosB) dia[pos - 1].push(b);
+      let k = 0;
+      for (const jogo of dia) while (jogo.length < 2) jogo.push(p[k++]);
 
-      const jogos = pares
-        .map(([dobrador, rival, ordem], k) => ({
-          ordem,
-          // o time que dobra é mandante no primeiro jogo do dia e visitante no segundo
-          ...(k % 2 === 0
-            ? { time_casa_id: dobrador, time_fora_id: rival }
-            : { time_casa_id: rival, time_fora_id: dobrador }),
-        }))
-        .sort((x, y) => x.ordem - y.ordem);
+      if (dia.some(([x, y]) => usados.has(chave(x, y)))) continue;
+      const novos = new Set(usados);
+      dia.forEach(([x, y]) => novos.add(chave(x, y)));
+
+      const jogos = dia.map(([x, y], i) => ({
+        ordem: i + 1,
+        ...(i % 2 === 0 ? { time_casa_id: x, time_fora_id: y } : { time_casa_id: y, time_fora_id: x }),
+      }));
 
       rodadas.push(jogos);
       if (passo(r + 1, novos)) return true;
@@ -113,18 +118,23 @@ function buscar(timeIds, dobras, jogosA, jogosB, rand) {
  * @returns {{dobras: {a:number,b:number}[], rodadas: {numero:number, jogos: object[]}[]}}
  */
 export function gerarCalendario(timeIds, opcoes = {}) {
-  const { dobras, jogosA = [1, 4], jogosB = [2, 3], rand = Math.random } = opcoes;
+  const { dobras, jogosA = [1, 4], jogosB = [2, 4], rand = Math.random } = opcoes;
   if (!Array.isArray(timeIds) || timeIds.length !== 6 || new Set(timeIds).size !== 6) {
     throw new ErroCalendario(`O formato oficial exige exatamente 6 times (há ${timeIds?.length ?? 0} cadastrados).`);
   }
   validarPosicoes(jogosA, jogosB);
+  if (dobras) conferirDobras(dobras, timeIds);
 
-  const escolha = dobras ? (conferirDobras(dobras, timeIds), dobras) : sortearDobras(timeIds, rand);
-  const jogos = buscar(timeIds, escolha, jogosA, jogosB, rand);
-  if (!jogos) {
-    throw new ErroCalendario('Não existe calendário válido com esses times repetidos. Escolha outra combinação ou sorteie novamente.');
+  // com os times repetidos definidos pelo admin há uma única tentativa; no sorteio, tenta várias combinações
+  const tentativas = dobras ? 1 : 500;
+  for (let t = 0; t < tentativas; t++) {
+    const escolha = dobras ?? sortearDobras(timeIds, rand);
+    const jogos = buscar(timeIds, escolha, jogosA, jogosB, rand);
+    if (jogos) return { dobras: escolha, rodadas: jogos.map((js, i) => ({ numero: i + 1, jogos: js })) };
   }
-  return { dobras: escolha, rodadas: jogos.map((js, i) => ({ numero: i + 1, jogos: js })) };
+  throw new ErroCalendario(dobras
+    ? 'Não existe calendário válido com esses times repetidos. Escolha outra combinação ou outro padrão de jogos.'
+    : 'Não foi possível montar um calendário válido com esse padrão de jogos. Escolha outro padrão.');
 }
 
 /**
@@ -132,7 +142,7 @@ export function gerarCalendario(timeIds, opcoes = {}) {
  * @param {{numero:number, jogos:{ordem:number,time_casa_id:number,time_fora_id:number}[]}[]} rodadas
  * @returns {{ok: boolean, erros: string[], avisos: string[]}} erros = formato quebrado; avisos = dinâmica fora do padrão
  */
-export function validarCalendario(rodadas, { jogosA = [1, 4], jogosB = [2, 3] } = {}) {
+export function validarCalendario(rodadas, { jogosA = [1, 4], jogosB = [2, 4] } = {}) {
   const erros = [];
   const avisos = [];
   const ordenadas = [...rodadas].sort((x, y) => x.numero - y.numero);
@@ -172,6 +182,9 @@ export function validarCalendario(rodadas, { jogosA = [1, 4], jogosB = [2, 3] } 
     for (const [id, ordens] of dobradores) {
       vezesQueDobrou.set(id, (vezesQueDobrou.get(id) ?? 0) + 1);
       const ordenado = [...ordens].sort((x, y) => x - y);
+      if (ordenado.some((n, k) => k > 0 && n - ordenado[k - 1] === 1)) {
+        erros.push(`No ${r.numero}º sábado, o time ${id} joga partidas seguidas (jogos ${ordenado.join(' e ')}).`);
+      }
       const padrao = [jogosA, jogosB].some((p) => [...p].sort((x, y) => x - y).join() === ordenado.join());
       if (i < 3 && !padrao) avisos.push(`No sábado ${r.numero}, o time ${id} joga os jogos ${ordenado.join(' e ')} (padrão: ${jogosA.join(' e ')} ou ${jogosB.join(' e ')}).`);
     }

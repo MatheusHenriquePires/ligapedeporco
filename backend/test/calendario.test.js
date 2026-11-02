@@ -35,23 +35,41 @@ test('cada time joga duas vezes em exatamente um sábado (sábados 1 a 3)', () =
   for (const id of TIMES) assert.equal(jogosDoTimeNoSabado(rodadas[3], id).length, 1);
 });
 
-test('time A joga o 1º e o último jogo; time B joga os dois do meio', () => {
+test('padrão: time A joga o 1º e o último jogo; time B joga o 2º e o último', () => {
   const dobras = [{ a: 11, b: 12 }, { a: 13, b: 14 }, { a: 15, b: 16 }];
   const resultado = gerarCalendario(TIMES, { dobras, rand: aleatorio(3) });
   assert.deepEqual(resultado.dobras, dobras);
   dobras.forEach(({ a, b }, i) => {
     assert.deepEqual(jogosDoTimeNoSabado(resultado.rodadas[i], a), [1, 4]);
-    assert.deepEqual(jogosDoTimeNoSabado(resultado.rodadas[i], b), [2, 3]);
+    assert.deepEqual(jogosDoTimeNoSabado(resultado.rodadas[i], b), [2, 4]);
   });
 });
 
-test('as posições dos jogos de A e B são configuráveis', () => {
-  const { rodadas, dobras } = gerarCalendario(TIMES, { jogosA: [1, 2], jogosB: [3, 4], rand: aleatorio(5) });
-  assert.deepEqual(jogosDoTimeNoSabado(rodadas[0], dobras[0].a), [1, 2]);
-  assert.deepEqual(jogosDoTimeNoSabado(rodadas[0], dobras[0].b), [3, 4]);
-  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 2], jogosB: [2, 3] }), ErroCalendario);
-  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 1], jogosB: [2, 3] }), ErroCalendario);
-  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 5], jogosB: [2, 3] }), ErroCalendario);
+test('ninguém joga duas partidas seguidas no mesmo sábado (qualquer padrão permitido)', () => {
+  const padroes = [[[1, 4], [2, 4]], [[1, 4], [1, 3]], [[1, 3], [2, 4]]];
+  for (const [jogosA, jogosB] of padroes) {
+    for (let semente = 1; semente <= 25; semente++) {
+      const { rodadas } = gerarCalendario(TIMES, { jogosA, jogosB, rand: aleatorio(semente) });
+      for (const rodada of rodadas) {
+        for (const id of TIMES) {
+          const ordens = jogosDoTimeNoSabado(rodada, id);
+          ordens.forEach((n, k) => { if (k > 0) assert.ok(n - ordens[k - 1] > 1, `time ${id} jogou ${ordens.join(' e ')}`); });
+        }
+      }
+      assert.equal(validarCalendario(rodadas, { jogosA, jogosB }).ok, true);
+    }
+  }
+});
+
+test('as posições dos jogos de A e B são configuráveis, mas nunca seguidas', () => {
+  const { rodadas, dobras } = gerarCalendario(TIMES, { jogosA: [1, 3], jogosB: [2, 4], rand: aleatorio(5) });
+  assert.deepEqual(jogosDoTimeNoSabado(rodadas[0], dobras[0].a), [1, 3]);
+  assert.deepEqual(jogosDoTimeNoSabado(rodadas[0], dobras[0].b), [2, 4]);
+  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 2], jogosB: [3, 4] }), ErroCalendario); // 1 e 2 seguidos
+  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 4], jogosB: [2, 3] }), ErroCalendario); // 2 e 3 seguidos
+  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 4], jogosB: [1, 4] }), ErroCalendario); // mesmos jogos
+  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 1], jogosB: [2, 4] }), ErroCalendario);
+  assert.throws(() => gerarCalendario(TIMES, { jogosA: [1, 5], jogosB: [2, 4] }), ErroCalendario);
 });
 
 test('rejeita dobras inválidas em vez de forçar um calendário', () => {
@@ -102,13 +120,23 @@ test('validação aponta confronto repetido e contagem errada', () => {
   assert.ok(r2.erros.some((e) => e.includes('15 partidas')));
 });
 
-test('validação gera aviso (não erro) quando a dinâmica das dobras foi alterada na edição manual', () => {
+test('validação gera aviso (não erro) quando os jogos de quem repete fogem do padrão', () => {
   const { rodadas } = gerarCalendario(TIMES, { dobras: [{ a: 11, b: 12 }, { a: 13, b: 14 }, { a: 15, b: 16 }], rand: aleatorio(4) });
-  const copia = JSON.parse(JSON.stringify(rodadas));
-  // troca a ordem dos jogos 1 e 2 da primeira rodada: o time A passa a jogar 2 e 4
-  const [j1, j2] = [copia[0].jogos[0], copia[0].jogos[1]];
-  [j1.ordem, j2.ordem] = [j2.ordem, j1.ordem];
-  const r = validarCalendario(copia);
+  // o calendário segue o padrão 1/4 e 2/4; conferir com outro padrão (1/3 e 2/4) gera aviso, sem erro
+  const r = validarCalendario(rodadas, { jogosA: [1, 3], jogosB: [2, 4] });
   assert.equal(r.ok, true);
   assert.ok(r.avisos.length > 0);
+});
+
+test('validação aponta como erro quem joga duas partidas seguidas', () => {
+  const { rodadas } = gerarCalendario(TIMES, { dobras: [{ a: 11, b: 12 }, { a: 13, b: 14 }, { a: 15, b: 16 }], rand: aleatorio(6) });
+  const copia = JSON.parse(JSON.stringify(rodadas));
+  // troca a ordem dos jogos 3 e 4 da primeira rodada: o time B (2º e 4º) passa a jogar 2 e 3
+  for (const j of copia[0].jogos) {
+    if (j.ordem === 3) j.ordem = 4;
+    else if (j.ordem === 4) j.ordem = 3;
+  }
+  const r = validarCalendario(copia);
+  assert.equal(r.ok, false);
+  assert.ok(r.erros.some((e) => e.includes('seguidas')));
 });
